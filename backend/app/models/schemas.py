@@ -23,4 +23,5 @@ class QueryResponse(BaseModel):
     sources: List[Source]
     refused: bool
     confidence: Literal["high", "low"]
+    llm_attempts: int = 1
     timings_ms: Timings
