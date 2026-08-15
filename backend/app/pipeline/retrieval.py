@@ -60,7 +60,11 @@ assert len(_metadata) == _index.ntotal, (
 )
 
 logger.info("Loading SentenceTransformer model: %s", _MODEL_NAME)
+import torch
+torch.set_grad_enabled(False)
+torch.set_num_threads(1)
 _model = SentenceTransformer(_MODEL_NAME)
+_model.eval()
 logger.info("Retrieval module ready.")
 
 
