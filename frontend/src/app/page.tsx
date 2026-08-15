@@ -1,4 +1,5 @@
 import { ChatInterface } from "@/components/chat-interface";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Mic, Zap } from "lucide-react";
 
 export default function Home() {
@@ -15,9 +16,12 @@ export default function Home() {
             <span className="font-bold text-lg tracking-tight">VoiceRAG</span>
           </div>
           
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-semibold uppercase tracking-widest">
-            <Zap className="w-3.5 h-3.5" />
-            HH Goa 2026
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-semibold uppercase tracking-widest">
+              <Zap className="w-3.5 h-3.5" />
+              HH Goa 2026
+            </div>
+            <ThemeToggle />
           </div>
         </div>
       </header>
