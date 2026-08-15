@@ -53,3 +53,6 @@
 - `confidence` (string): `"high"` or `"low"`.
 - `llm_attempts` (integer): Number of LLM API attempts (1 or 2).
 - `timings_ms` (`Timings` object): Breakdown of latency (`stt`, `retrieval`, `rerank`, `llm`, `total`).
+
+## Known Limitations
+The `off_topic_guardrail` (FAISS score threshold) can be bypassed by queries with incidental lexical/semantic overlap with unrelated corpus content (e.g. "bomb" and "recipe" both appear in different MSMARCO contexts, producing a top score of 0.54 despite no genuine topical match). In these cases, the `output_guardrail` (grounding check) serves as a second line of defense, correctly flagging low confidence when the LLM cannot ground its answer in the retrieved context. This demonstrates the value of layered guardrails rather than relying on retrieval-score thresholding alone.
