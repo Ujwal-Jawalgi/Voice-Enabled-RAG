@@ -48,8 +48,8 @@ class Candidate:
 #   - Metadata list of 18k dicts ≈ 15-25 MB
 #   - MiniLM model ≈ 130 MB
 # ---------------------------------------------------------------------------
-logger.info("Loading FAISS index from %s", _INDEX_PATH)
-_index: faiss.IndexFlatIP = faiss.read_index(_INDEX_PATH) # type: ignore
+logger.info("Loading FAISS index from %s using MMAP", _INDEX_PATH)
+_index: faiss.IndexFlatIP = faiss.read_index(_INDEX_PATH, faiss.IO_FLAG_MMAP) # type: ignore
 logger.info("FAISS index loaded: %d vectors, dimension %d", _index.ntotal, _index.d)
 
 logger.info("Loading metadata from %s", _META_PATH)
