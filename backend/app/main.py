@@ -6,12 +6,8 @@ app = FastAPI(title="HH Goa 2026 Voice RAG")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000", 
-        "http://127.0.0.1:3000",
-        "https://YOUR_VERCEL_PROJECT_URL.vercel.app" # Placeholder for Vercel deployment
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
