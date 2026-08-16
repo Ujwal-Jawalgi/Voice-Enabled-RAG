@@ -10,8 +10,8 @@ from sentence_transformers import SentenceTransformer
 
 MAX_CHUNKS_PER_LANG = 6000
 CHAR_LENGTH_THRESHOLD = 1000
-TOKEN_MAX_SIZE = 256
-TOKEN_OVERLAP = 40
+TOKEN_MAX_SIZE = 128
+TOKEN_OVERLAP = 20
 BATCH_SIZE = 256
 MODEL_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
