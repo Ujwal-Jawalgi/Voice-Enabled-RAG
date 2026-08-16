@@ -49,16 +49,21 @@ class Candidate:
 #   - Metadata list of 18k dicts ≈ 15-25 MB
 #   - MiniLM model ≈ 130 MB
 # ---------------------------------------------------------------------------
-logger.info("Loading FAISS index from %s using MMAP", _INDEX_PATH)
-_index: faiss.IndexFlatIP = faiss.read_index(_INDEX_PATH, faiss.IO_FLAG_MMAP) # type: ignore
-logger.info("FAISS index loaded: %d vectors, dimension %d", _index.ntotal, _index.d)
+try:
+    logger.info("Loading FAISS index from %s using MMAP", _INDEX_PATH)
+    _index: faiss.IndexFlatIP = faiss.read_index(_INDEX_PATH, faiss.IO_FLAG_MMAP) # type: ignore
+    logger.info("FAISS index loaded: %d vectors, dimension %d", _index.ntotal, _index.d)
 
-logger.info("Loading metadata from %s", _META_PATH)
-with open(_META_PATH, "rb") as _f:
-    _metadata: list[dict] = pickle.load(_f)
-assert len(_metadata) == _index.ntotal, (
-    f"Metadata length ({len(_metadata)}) != index size ({_index.ntotal})"
-)
+    logger.info("Loading metadata from %s", _META_PATH)
+    with open(_META_PATH, "rb") as _f:
+        _metadata: list[dict] = pickle.load(_f)
+    assert len(_metadata) == _index.ntotal, (
+        f"Metadata length ({len(_metadata)}) != index size ({_index.ntotal})"
+    )
+except Exception as e:
+    logger.warning("Could not load index/metadata. App will start empty. Error: %s", e)
+    _index = None
+    _metadata = []
 
 logger.info("Loading SentenceTransformer model: %s", _MODEL_NAME)
 import torch
