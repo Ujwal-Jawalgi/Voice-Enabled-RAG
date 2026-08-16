@@ -28,18 +28,6 @@ def clean_text(text: str) -> str:
     return text
 
 def chunk_passage(text: str, passage_id: str, lang: str, source_query_id: str, is_selected: int, tokenizer):
-    if len(text) <= CHAR_LENGTH_THRESHOLD:
-        return [{
-            "text": text,
-            "passage_id": passage_id,
-            "language": lang,
-            "source_query_id": source_query_id,
-            "is_selected": is_selected,
-            "char_length": len(text),
-            "chunk_strategy": "passage"
-        }]
-    
-    # Fallback to fixed overlap chunking
     tokens = tokenizer.encode(text, add_special_tokens=False)
     if len(tokens) <= TOKEN_MAX_SIZE:
         return [{
