@@ -88,15 +88,11 @@ def embed_query(text: str) -> np.ndarray:
 
 
 def search(query_vector: np.ndarray, k: int = 10) -> list[Candidate]:
-    """Search the FAISS index for the k nearest neighbours.
-
-    Args:
-        query_vector: shape (1, d), already L2-normalized.
-        k: number of results to return.
-
-    Returns:
-        List of Candidate objects sorted by descending cosine similarity.
-    """
+    """Search the FAISS index for the k nearest neighbours."""
+    if _index is None:
+        logger.warning("Index is empty or missing, returning no results.")
+        return []
+        
     distances, indices = _index.search(query_vector, k)
 
     results: list[Candidate] = []
