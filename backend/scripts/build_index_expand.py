@@ -31,11 +31,18 @@ def phase1_estimate():
     log("=== PHASE 1: ESTIMATE ===")
     fs = fsspec.filesystem("hf")
     
-    hin_path = "datasets/ai4bharat/MSMARCO-XI/validation/hinval.parquet"
-    kan_path = "datasets/ai4bharat/MSMARCO-XI/validation/kanval.parquet"
+    local_hin = os.path.join(DATA_DIR, "hinval.parquet")
+    local_kan = os.path.join(DATA_DIR, "kanval.parquet")
     
-    hin_pf = pq.ParquetFile(fs.open(hin_path, "rb"))
-    kan_pf = pq.ParquetFile(fs.open(kan_path, "rb"))
+    if not os.path.exists(local_hin):
+        log("Downloading hinval.parquet...")
+        fs.get("datasets/ai4bharat/MSMARCO-XI/validation/hinval.parquet", local_hin)
+    if not os.path.exists(local_kan):
+        log("Downloading kanval.parquet...")
+        fs.get("datasets/ai4bharat/MSMARCO-XI/validation/kanval.parquet", local_kan)
+        
+    hin_pf = pq.ParquetFile(local_hin)
+    kan_pf = pq.ParquetFile(local_kan)
     
     hin_rows = hin_pf.metadata.num_rows
     kan_rows = kan_pf.metadata.num_rows
@@ -121,9 +128,8 @@ def phase2_build(hin_total, kan_total, cap, script_start_time):
         log("Creating new FAISS index...")
         index = faiss.IndexFlatIP(dimension)
         
-    fs = fsspec.filesystem("hf")
-    hin_path = "datasets/ai4bharat/MSMARCO-XI/validation/hinval.parquet"
-    kan_path = "datasets/ai4bharat/MSMARCO-XI/validation/kanval.parquet"
+    local_hin = os.path.join(DATA_DIR, "hinval.parquet")
+    local_kan = os.path.join(DATA_DIR, "kanval.parquet")
 
     def process_and_commit(chunks, rows_in_batch):
         if not chunks:
@@ -167,7 +173,7 @@ def phase2_build(hin_total, kan_total, cap, script_start_time):
 
     # HINDI + ENGLISH
     log("Processing Hindi & English...")
-    hin_pf = pq.ParquetFile(fs.open(hin_path, "rb"))
+    hin_pf = pq.ParquetFile(local_hin)
     row_idx = 0
     batch_chunks = []
     rows_in_batch = 0
@@ -216,7 +222,7 @@ def phase2_build(hin_total, kan_total, cap, script_start_time):
 
     # KANNADA
     log("Processing Kannada...")
-    kan_pf = pq.ParquetFile(fs.open(kan_path, "rb"))
+    kan_pf = pq.ParquetFile(local_kan)
     row_idx = 0
     batch_chunks = []
     rows_in_batch = 0
