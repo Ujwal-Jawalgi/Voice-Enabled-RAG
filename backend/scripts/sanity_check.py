@@ -6,7 +6,8 @@ from sentence_transformers import SentenceTransformer
 
 def main():
     sys.stdout.reconfigure(encoding='utf-8') # type: ignore
-    data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+    default_data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+    data_dir = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH", default_data_dir)
     index_path = os.path.join(data_dir, "vector_index.faiss")
     meta_path = os.path.join(data_dir, "metadata.pkl")
 

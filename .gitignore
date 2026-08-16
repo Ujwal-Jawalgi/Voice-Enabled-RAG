@@ -50,3 +50,7 @@ Thumbs.db
 
 # Frontend is managed by its own Git repository
 *.pkl
+
+*.parquet
+*.jsonl
+backend/data/*.txt

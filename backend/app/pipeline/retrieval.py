@@ -21,7 +21,8 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Paths — resolved relative to the project root, not the app package
 # ---------------------------------------------------------------------------
-_DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data")
+_DEFAULT_DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data")
+_DATA_DIR = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH", _DEFAULT_DATA_DIR)
 _INDEX_PATH = os.path.join(_DATA_DIR, "vector_index.faiss")
 _META_PATH = os.path.join(_DATA_DIR, "metadata.pkl")
 _MODEL_NAME = "paraphrase-multilingual-MiniLM-L12-v2"

@@ -135,7 +135,9 @@ import pyarrow.parquet as pq
 import pickle
 
 # Load the set of query_ids already in the index to prefer out-of-index queries
-meta_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "metadata.pkl")
+default_data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+data_dir = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH", default_data_dir)
+meta_path = os.path.join(data_dir, "metadata.pkl")
 with open(meta_path, "rb") as f:
     metadata = pickle.load(f)
 indexed_query_ids = set(m["source_query_id"] for m in metadata)

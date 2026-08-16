@@ -14,7 +14,8 @@ TOKEN_MAX_SIZE = 100
 TOKEN_OVERLAP = 20
 BATCH_SIZE = 256
 MODEL_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+DEFAULT_DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+DATA_DIR = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH", DEFAULT_DATA_DIR)
 
 def clean_text(text: str) -> str:
     if not text:
