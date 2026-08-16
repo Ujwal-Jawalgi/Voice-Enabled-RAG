@@ -81,6 +81,16 @@ def rerank(query: str, candidates: list[Candidate]) -> list[Candidate]:
     if not candidates:
         return []
 
+    # Deduplicate candidates by passage_id, keeping the highest-scoring one.
+    # Candidates are already sorted by descending dense score from FAISS.
+    unique_candidates = []
+    seen_passages = set()
+    for c in candidates:
+        if c.passage_id not in seen_passages:
+            seen_passages.add(c.passage_id)
+            unique_candidates.append(c)
+    candidates = unique_candidates
+
     # --- Dense rank (already sorted by FAISS score descending) ---
     dense_rank: dict[str, int] = {}
     for rank_idx, c in enumerate(candidates):
