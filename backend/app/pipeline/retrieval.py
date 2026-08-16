@@ -14,7 +14,7 @@ from dataclasses import dataclass
 
 import faiss
 import numpy as np
-from fastembed import TextEmbedding
+from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
@@ -59,8 +59,12 @@ assert len(_metadata) == _index.ntotal, (
     f"Metadata length ({len(_metadata)}) != index size ({_index.ntotal})"
 )
 
-logger.info("Loading FastEmbed model: %s", _MODEL_NAME)
-_model = TextEmbedding(model_name=f"sentence-transformers/{_MODEL_NAME}")
+logger.info("Loading SentenceTransformer model: %s", _MODEL_NAME)
+import torch
+torch.set_grad_enabled(False)
+torch.set_num_threads(1)
+_model = SentenceTransformer(_MODEL_NAME)
+_model.eval()
 logger.info("Retrieval module ready.")
 
 
@@ -73,12 +77,8 @@ def embed_query(text: str) -> np.ndarray:
     Returns shape (1, 384) ready for faiss.search().
     Normalization ensures IndexFlatIP computes cosine similarity.
     """
-    embeddings = list(_model.embed([text]))
-    vec = embeddings[0]
-    norm = np.linalg.norm(vec)
-    if norm > 0:
-        vec = vec / norm
-    return vec.astype(np.float32).reshape(1, -1)
+    vec = _model.encode([text], normalize_embeddings=True)
+    return vec.astype(np.float32) # type: ignore
 
 
 def search(query_vector: np.ndarray, k: int = 10) -> list[Candidate]:
