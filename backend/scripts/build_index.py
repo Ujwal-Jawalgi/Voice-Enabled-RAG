@@ -10,7 +10,7 @@ from sentence_transformers import SentenceTransformer
 
 MAX_CHUNKS_PER_LANG = 6000
 CHAR_LENGTH_THRESHOLD = 1000
-TOKEN_MAX_SIZE = 128
+TOKEN_MAX_SIZE = 100
 TOKEN_OVERLAP = 20
 BATCH_SIZE = 256
 MODEL_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
