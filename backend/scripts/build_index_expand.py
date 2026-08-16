@@ -118,6 +118,7 @@ def phase2_build(hin_total, kan_total, cap, script_start_time):
         }
         
     model = SentenceTransformer(MODEL_NAME)
+    model.max_seq_length = 128
     tokenizer = model.tokenizer
     
     dimension = model.get_sentence_embedding_dimension()

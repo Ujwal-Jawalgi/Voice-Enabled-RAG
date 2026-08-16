@@ -62,6 +62,7 @@ def build_index():
     
     print(f"Loading embedding model: {MODEL_NAME}")
     model = SentenceTransformer(MODEL_NAME)
+    model.max_seq_length = 128
     tokenizer = model.tokenizer
     
     fs = fsspec.filesystem("hf")
