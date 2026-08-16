@@ -3,7 +3,7 @@ uvicorn==0.24.0.post1
 pydantic==2.4.2
 pydantic-settings==2.0.3
 faiss-cpu
-fastembed
+sentence-transformers
 rank_bm25==0.2.2
 groq
 pytest==7.4.3

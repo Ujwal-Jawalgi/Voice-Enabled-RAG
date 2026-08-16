@@ -80,6 +80,35 @@ def test_rerank_fusion_ordering(mock_bm25):
     assert reranked2[1].passage_id == "p1"
     assert reranked2[2].passage_id == "p3"
 
+@patch("app.pipeline.rerank.BM25Okapi")
+def test_rerank_deduplication(mock_bm25):
+    # Candidates with duplicate passage_ids
+    # c1 and c3 have the same passage_id "p_dup", but c1 has a higher FAISS score (0.9) than c3 (0.7).
+    c1 = Candidate(passage_id="p_dup", text="text in english", score=0.9, language="english", chunk_strategy="passage")
+    c2 = Candidate(passage_id="p_other", text="text2", score=0.8, language="english", chunk_strategy="passage")
+    c3 = Candidate(passage_id="p_dup", text="text in hindi", score=0.7, language="hindi", chunk_strategy="passage")
+    candidates = [c1, c2, c3]
+
+    # Mock BM25 to just return equal scores so RRF depends entirely on Dense Rank
+    mock_bm25_instance = MagicMock()
+    mock_bm25_instance.get_scores.return_value = [1.0, 1.0] # Only 2 items will reach BM25 after dedup
+    mock_bm25.return_value = mock_bm25_instance
+
+    reranked = rerank("dummy query", candidates)
+    
+    # We should only have 2 unique passage_ids returned
+    assert len(reranked) == 2
+    
+    # The deduplicated candidates should be c1 and c2.
+    # The lower scoring c3 should be discarded before RRF ranks are computed.
+    assert reranked[0].passage_id == "p_dup" # dense rank 1
+    assert reranked[1].passage_id == "p_other" # dense rank 2
+    
+    # Check that c1's text is kept, not c3's
+    p_dup_candidate = next(c for c in reranked if c.passage_id == "p_dup")
+    assert p_dup_candidate.text == "text in english"
+    assert p_dup_candidate.language == "english"
+
 @patch("app.pipeline.harness.llm_call")
 @patch("app.pipeline.harness.search")
 @patch("app.pipeline.harness.embed_query")

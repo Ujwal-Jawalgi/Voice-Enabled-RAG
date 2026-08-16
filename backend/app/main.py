@@ -1,8 +1,24 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+import time
+import logging
 from app.routes import query
 
-app = FastAPI(title="HH Goa 2026 Voice RAG")
+logger = logging.getLogger(__name__)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Executing startup warm-up query to page FAISS index into memory...")
+    from app.pipeline.retrieval import embed_query, search
+    start_time = time.time()
+    vec = embed_query("test warm-up query")
+    search(vec, k=10)
+    elapsed = (time.time() - start_time) * 1000
+    logger.info(f"Warm-up query completed in {elapsed:.1f}ms")
+    yield
+
+app = FastAPI(title="HH Goa 2026 Voice RAG", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
