@@ -56,7 +56,11 @@ def _tokenize(text: str) -> list[str]:
 logger.info("Building BM25 index over %d passages (one-time cost)...", 0)
 _all_texts = get_all_texts()
 _bm25_corpus = [_tokenize(t) for t in _all_texts]
-_bm25 = BM25Okapi(_bm25_corpus)
+if _bm25_corpus:
+    _bm25 = BM25Okapi(_bm25_corpus)
+else:
+    logger.warning("Corpus is empty. Skipping BM25 initialization.")
+    _bm25 = None
 logger.info("BM25 index built over %d passages.", len(_all_texts))
 
 
