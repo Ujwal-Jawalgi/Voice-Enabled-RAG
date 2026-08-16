@@ -11,7 +11,7 @@ from build_index import chunk_passage, clean_text
 
 MAX_RUNTIME_HOURS = 10
 BATCH_SIZE = 256
-ROWS_PER_BATCH = 10000
+ROWS_PER_BATCH = 500
 MODEL_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
@@ -153,7 +153,17 @@ def phase2_build(hin_total, kan_total, cap, script_start_time):
                     chk["total_processed_rows"] += rows_in_batch
                     return True
                     
-                embeddings = model.encode(safe_texts, batch_size=BATCH_SIZE, normalize_embeddings=True, show_progress_bar=False)
+                import numpy as np
+                import gc
+                embeddings_list = []
+                for i in range(0, len(safe_texts), 5000):
+                    batch_texts = safe_texts[i:i+5000]
+                    emb = model.encode(batch_texts, batch_size=BATCH_SIZE, normalize_embeddings=True, show_progress_bar=False)
+                    embeddings_list.append(emb)
+                    gc.collect()
+                    log(f"  --> Encoded {i+len(batch_texts)} / {len(safe_texts)} chunks in this batch")
+                
+                embeddings = np.vstack(embeddings_list)
                 
                 elapsed_hrs = (time.time() - script_start_time) / 3600
                 if elapsed_hrs > MAX_RUNTIME_HOURS:
