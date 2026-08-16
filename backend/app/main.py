@@ -38,6 +38,24 @@ app.include_router(query.router)
 def health_check():
     return {"status": "ok"}
 
+@app.get("/debug")
+def debug_status():
+    from app.pipeline.retrieval import _index, _metadata, _DATA_DIR, _INDEX_PATH, _META_PATH
+    import os
+    files = []
+    try:
+        files = os.listdir(_DATA_DIR)
+    except Exception as e:
+        files = [str(e)]
+    return {
+        "index_loaded": _index is not None,
+        "metadata_len": len(_metadata),
+        "data_dir": _DATA_DIR,
+        "index_path": _INDEX_PATH,
+        "meta_path": _META_PATH,
+        "files_in_dir": files
+    }
+
 from fastapi import Request
 import os
 from app.pipeline.retrieval import _DATA_DIR
