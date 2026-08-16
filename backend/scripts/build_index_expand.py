@@ -140,7 +140,20 @@ def phase2_build(hin_total, kan_total, cap, script_start_time):
         for attempt in range(4):
             try:
                 texts = [c["text"] for c in chunks]
-                embeddings = model.encode(texts, batch_size=BATCH_SIZE, normalize_embeddings=True, show_progress_bar=False)
+                safe_texts = []
+                safe_chunks = []
+                for t, c in zip(texts, chunks):
+                    if len(tokenizer.encode(t, add_special_tokens=False)) <= 120:
+                        safe_texts.append(t)
+                        safe_chunks.append(c)
+                    else:
+                        log(f"DROPPING MALFORMED CHUNK (length > 120)")
+                
+                if not safe_texts:
+                    chk["total_processed_rows"] += rows_in_batch
+                    return True
+                    
+                embeddings = model.encode(safe_texts, batch_size=BATCH_SIZE, normalize_embeddings=True, show_progress_bar=False)
                 
                 elapsed_hrs = (time.time() - script_start_time) / 3600
                 if elapsed_hrs > MAX_RUNTIME_HOURS:
@@ -148,7 +161,7 @@ def phase2_build(hin_total, kan_total, cap, script_start_time):
                     return False
                     
                 index.add(embeddings)
-                chk["metadata_store"].extend(chunks)
+                chk["metadata_store"].extend(safe_chunks)
                 chk["total_processed_rows"] += rows_in_batch
                 
                 faiss.write_index(index, INDEX_PATH)
@@ -162,9 +175,10 @@ def phase2_build(hin_total, kan_total, cap, script_start_time):
                 return True
                 
             except Exception as e:
-                log(f"Batch failed (attempt {attempt+1}/4): {e}")
+                import traceback
+                log(f"Batch failed (attempt {attempt+1}/4):\n{traceback.format_exc()}")
                 if attempt < 3:
-                    time.sleep(30)
+                    time.sleep(5)
                 else:
                     log(f"SKIPPING BATCH due to repeated failures.")
                     chk["total_processed_rows"] += rows_in_batch
