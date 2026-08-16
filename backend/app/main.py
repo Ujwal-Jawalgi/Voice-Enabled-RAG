@@ -37,3 +37,15 @@ app.include_router(query.router)
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+from fastapi import Request
+import os
+from app.pipeline.retrieval import _DATA_DIR
+
+@app.post("/upload_chunk")
+async def upload_chunk(request: Request):
+    """Temporary endpoint to bypass Railway SFTP timeout and 100MB HTTP limit."""
+    chunk = await request.body()
+    with open(os.path.join(_DATA_DIR, "metadata.pkl"), "ab") as f:
+        f.write(chunk)
+    return {"status": "ok", "bytes_written": len(chunk)}
