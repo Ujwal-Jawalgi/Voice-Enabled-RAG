@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # Initialize single Groq client
 client = AsyncGroq(api_key=settings.groq_api_key)
 
-MODEL = "llama-3.1-8b-instant"
+MODEL = "groq/compound-mini"
 TIMEOUT_SEC = 4.0
 
 
