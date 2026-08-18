@@ -485,7 +485,7 @@ export function ChatInterface() {
                     {response.sources.map((s, idx) => (
                       <li key={idx} className="flex justify-between text-sm bg-background/50 px-3 py-2 rounded-lg border border-border">
                         <span className="font-mono text-indigo-500 truncate mr-4" title={s.passage_id}>{s.passage_id}</span>
-                        <span className="text-muted-foreground tabular-nums">{(s.score*0.1).toFixed(3)}</span>
+                        <span className="text-muted-foreground tabular-nums">{s.score.toFixed(3)}</span>
                       </li>
                     ))}
                   </ul>
