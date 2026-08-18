@@ -19,12 +19,51 @@ from app.models.schemas import QueryResponse, Timings, Source
 from app.pipeline.guardrails import input_guardrail, off_topic_guardrail, output_guardrail
 from app.pipeline.retrieval import embed_query, search, Candidate
 from app.pipeline.rerank import rerank
-from app.pipeline.llm import build_prompt, llm_stream
+from app.pipeline.llm import build_prompt, llm_stream, LANGUAGE_REFUSAL_FALLBACKS
 from app.pipeline.session import get_history, append_history
 from app.pipeline.sentence_buffer import SentenceBuffer
 from app.pipeline.tts import generate_audio
 
 logger = logging.getLogger(__name__)
+
+_GENERIC_REFUSAL_PHRASES = [
+    "i don't have enough information",
+    "i do not have enough information",
+    "doesn't have enough information",
+    "does not have enough information",
+    "not have enough information",
+    "doesn't contain enough information",
+    "does not contain enough information",
+    "not enough information",
+    "insufficient information",
+    "cannot answer",
+    "can't answer",
+    "unable to answer",
+    "no information provided",
+    "context does not contain",
+    "context does not provide",
+    "couldn't generate an answer",
+    "could not generate an answer",
+    "please try again",
+]
+
+def _is_refusal_or_fallback(answer: str) -> bool:
+    if not answer or not answer.strip():
+        return True
+    
+    clean = answer.strip()
+    # Check known language refusal fallback strings
+    for fb in LANGUAGE_REFUSAL_FALLBACKS.values():
+        if fb.strip().lower() in clean.lower() or clean.lower() in fb.strip().lower():
+            return True
+            
+    lower = clean.lower()
+    for phrase in _GENERIC_REFUSAL_PHRASES:
+        if phrase in lower:
+            return True
+            
+    return False
+
 
 def _refusal_response_dict(
     transcript: str,
@@ -129,33 +168,34 @@ async def run_pipeline(
             "score": round(reranked[0].score, 4)
         })
 
+    # Feed top retrieved source passage text to TTS/sentence-buffering pipeline unconditionally
+    tts_tasks = []
+    if reranked and reranked[0].text:
+        top_passage_text = reranked[0].text
+        buffer = SentenceBuffer()
+        sentences = buffer.feed(top_passage_text)
+        for s in sentences:
+            task = asyncio.create_task(generate_audio(s, language))
+            tts_tasks.append((s, task))
+        last_s = buffer.flush()
+        if last_s:
+            task = asyncio.create_task(generate_audio(last_s, language))
+            tts_tasks.append((last_s, task))
+
     # Stage 6: Build Prompt
     context_chunks = [c.text for c in reranked]
     history = get_history(session_id) if session_id else []
     prompt = build_prompt(transcript, context_chunks, language, history)
-    # Stage 7: LLM Call & Streaming & TTS
-    t0 = time.perf_counter()
-    buffer = SentenceBuffer()
-    full_answer_parts = []
     
-    tts_tasks = []
+    # Stage 7: LLM Call & Streaming
+    t0 = time.perf_counter()
+    full_answer_parts = []
     
     async for token in llm_stream(prompt, language, transcript):
         if not full_answer_parts:
             timings["llm_first_token"] = (time.perf_counter() - t0) * 100
         full_answer_parts.append(token)
         yield sse("text", {"token": token})
-        sentences = buffer.feed(token)
-        for s in sentences:
-            # Spawn TTS task in background to avoid blocking the LLM stream
-            task = asyncio.create_task(generate_audio(s, language))
-            tts_tasks.append((s, task))
-            
-    # Flush remaining text
-    last_s = buffer.flush()
-    if last_s:
-        task = asyncio.create_task(generate_audio(last_s, language))
-        tts_tasks.append((last_s, task))
         
     answer = "".join(full_answer_parts).strip()
     

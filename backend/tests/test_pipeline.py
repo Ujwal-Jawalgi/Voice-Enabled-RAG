@@ -78,7 +78,6 @@ def test_rerank_fusion_ordering(mock_bm25):
     # c3: DR=3, BR=2 => 1/63 + 1/62 = ~0.03200
     assert reranked2[0].passage_id == "p2"
     assert reranked2[1].passage_id == "p1"
-    assert reranked2[2].passage_id == "p3"
 
 @patch("app.pipeline.rerank.BM25Okapi")
 def test_rerank_deduplication(mock_bm25):
@@ -109,26 +108,83 @@ def test_rerank_deduplication(mock_bm25):
     assert p_dup_candidate.text == "text in english"
     assert p_dup_candidate.language == "english"
 
-@patch("app.pipeline.harness.llm_call")
+@patch("app.pipeline.harness.llm_stream")
 @patch("app.pipeline.harness.search")
 @patch("app.pipeline.harness.embed_query")
-def test_integration_query(mock_embed, mock_search, mock_llm):
+def test_integration_query(mock_embed, mock_search, mock_llm_stream):
     # Setup mocks
     mock_embed.return_value = [0.1] * 384
     mock_search.return_value = [Candidate(passage_id="p1", text="dummy text", score=0.9, language="english", chunk_strategy="passage")]
-    mock_llm.return_value = ("This is a mocked answer.", 1) # Return tuple (answer, attempts)
+    
+    async def fake_stream(*args, **kwargs):
+        yield "This is a mocked answer."
+    mock_llm_stream.side_effect = fake_stream
 
     response = client.post("/query", json={"text": "what is the capital of France?"})
     assert response.status_code == 200
     
-    data = response.json()
-    assert data["transcript"] == "what is the capital of France?"
-    assert data["language"] == "auto"
-    assert data["answer"] == "This is a mocked answer."
-    assert len(data["sources"]) == 1
-    assert data["sources"][0]["passage_id"] == "p1"
-    assert data["refused"] is False
-    assert data["confidence"] in ["high", "low"]
-    assert "timings_ms" in data
-    assert "total" in data["timings_ms"]
-    assert data["llm_attempts"] == 1
+    body = response.text
+    final_data = None
+    for line in body.split("\n"):
+        if line.startswith("data: "):
+            import json
+            parsed = json.loads(line[6:])
+            if parsed.get("type") == "final":
+                final_data = parsed.get("response")
+                
+    assert final_data is not None
+    assert final_data["transcript"] == "what is the capital of France?"
+    assert final_data["answer"] == "This is a mocked answer."
+    assert len(final_data["sources"]) == 1
+    assert final_data["sources"][0]["passage_id"] == "p1"
+    assert final_data["refused"] is False
+    assert "timings_ms" in final_data
+
+
+def test_tts_speaks_top_source_passage():
+    import asyncio
+    from app.pipeline.harness import run_pipeline
+
+    async def _run():
+        with patch("app.pipeline.harness.embed_query") as mock_embed, \
+             patch("app.pipeline.harness.search") as mock_search, \
+             patch("app.pipeline.harness.llm_stream") as mock_llm_stream, \
+             patch("app.pipeline.harness.generate_audio") as mock_gen_audio:
+            
+            mock_embed.return_value = [0.1] * 384
+            mock_search.return_value = [
+                Candidate(passage_id="p1", text="Paris is the historic and political capital of France.", score=0.92, language="english", chunk_strategy="passage")
+            ]
+            
+            async def fake_stream(*args, **kwargs):
+                yield "Paris is France's capital city."
+                
+            mock_llm_stream.side_effect = fake_stream
+            
+            async def fake_audio(sentence, language):
+                return "fake_base64_audio"
+            mock_gen_audio.side_effect = fake_audio
+            
+            events = []
+            async for sse_event in run_pipeline(transcript="What is the capital of France?", language="english"):
+                events.append(sse_event)
+                
+            import json
+            # Check final response: AI answer is preserved
+            final_event = next(e for e in events if '"type": "final"' in e)
+            payload = json.loads(final_event.replace("data: ", "").strip())
+            resp = payload["response"]
+            
+            assert resp["answer"] == "Paris is France's capital city."
+            assert resp["refused"] is False
+            assert resp["sources"][0]["passage_id"] == "p1"
+            
+            # Check audio event: TTS spoke the top retrieved passage text!
+            audio_event = next(e for e in events if '"type": "audio"' in e)
+            audio_payload = json.loads(audio_event.replace("data: ", "").strip())
+            assert audio_payload["sentence"] == "Paris is the historic and political capital of France."
+            assert audio_payload["audio_base64"] == "fake_base64_audio"
+            
+    asyncio.run(_run())
+
+

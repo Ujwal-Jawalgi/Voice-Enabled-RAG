@@ -257,7 +257,7 @@ export function ChatInterface() {
 
           <div className="z-10">
             <AudioRecorder
-              onRecordingComplete={(base64) => handleQuery({ audio_base64: base64 })}
+              onRecordingComplete={(payload) => handleQuery(payload)}
               isLoading={isLoading}
             />
           </div>
