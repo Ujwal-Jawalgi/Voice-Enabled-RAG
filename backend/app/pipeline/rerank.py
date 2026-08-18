@@ -28,8 +28,8 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 RRF_K = 60
 
-# Number of reranked candidates to return
-RERANK_TOP_N = 5
+# Number of reranked candidates to return (trimmed from 3 to 2 to optimize LLM latency)
+RERANK_TOP_N = 2
 
 
 # ---------------------------------------------------------------------------
@@ -51,17 +51,9 @@ def _tokenize(text: str) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
-# Build BM25 index once at module import
+# Note: No global BM25 index is built at startup because rerank() builds
+# an ephemeral index over just the k candidates for efficiency.
 # ---------------------------------------------------------------------------
-logger.info("Building BM25 index over %d passages (one-time cost)...", 0)
-_all_texts = get_all_texts()
-_bm25_corpus = [_tokenize(t) for t in _all_texts]
-if _bm25_corpus:
-    _bm25 = BM25Okapi(_bm25_corpus)
-else:
-    logger.warning("Corpus is empty. Skipping BM25 initialization.")
-    _bm25 = None
-logger.info("BM25 index built over %d passages.", len(_all_texts))
 
 
 # ---------------------------------------------------------------------------

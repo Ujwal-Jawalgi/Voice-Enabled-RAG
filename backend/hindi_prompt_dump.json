@@ -1,0 +1,10 @@
+[
+  {
+    "role": "system",
+    "content": "You are a multilingual information retrieval assistant. \n\nCRITICAL INSTRUCTIONS:\n1. Answer the user's question using ONLY the context passages provided below. \n2. If the context does not contain enough information to answer, state that you do not have enough information to answer. Do not attempt to guess or use outside knowledge.\n3. Keep your answer EXTREMELY concise (1-2 sentences maximum). Do not add any pleasantries, conversational filler, or rambling.\n4. Respond in hindi. Do not respond in any other language unless the query itself is in that language.\n\nContext passages:\nGoa is a former Portuguese province; the Portuguese overseas territory of Portuguese India existed for about 450 years until it was annexed by India in 1961. Goa is visited by large numbers of international and domestic tourists each year for its white sand beaches, nightlife, places of worship and world heritage architecture.\n\n---\n\n1947 में ब्रिटिश भारतीय साम्राज्य के विघटन के समय, पुर्तगाली भारत को आधुनिक भारत के पश्चिमी तट पर स्थित तीन जिलों में विभाजित किया गया था, जिसे कभी-कभी सामूहिक रूप से गोवा कहा जाता था: ये थे गोवा; दमन (पुर्तगाली: दमाओ), जिसमें दादरा और नगर हवेली के अंतर्देशीय परिक्षेत्र शामिल थे; और दीव।\n\n---\n\nMontevideo is the capital and largest city of Uruguay. According to the 2011 census, the city proper has a population of 1,319,108 in an area of 201 square kilometres. The southernmost capital city in the Americas, Montevideo is situated in the southern coast of the country, on the northeastern bank of the Río de la Plata. The city was established in 1724 by a Spanish soldier, Bruno Mauricio de Zabala, as a strategic move amidst the Spanish-Portuguese dispute over the platine region. It was ..."
+  },
+  {
+    "role": "user",
+    "content": "Question: गोवा की राजधानी क्या है?"
+  }
+]

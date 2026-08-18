@@ -1,6 +1,7 @@
 import { ChatInterface } from "@/components/chat-interface";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Mic, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
+import { PikachuLogo } from "@/components/pikachu-logo";
 
 export default function Home() {
   return (
@@ -8,12 +9,12 @@ export default function Home() {
       
       {/* Premium Header */}
       <header className="w-full border-b border-border bg-white/50 dark:bg-black/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <Mic className="w-4 h-4 text-white" />
+        <div className="w-full px-6 md:px-12 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center">
+              <PikachuLogo className="w-12 h-12 drop-shadow-md" />
             </div>
-            <span className="font-bold text-lg tracking-tight">VoiceRAG</span>
+            <span className="font-extrabold text-2xl tracking-tight">Pikachu</span>
           </div>
           
           <div className="flex items-center gap-3">
@@ -27,16 +28,13 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-6 py-12 md:py-20 flex flex-col items-center">
+      <main className="w-full px-6 md:px-12 py-12 md:py-20 flex flex-col items-center">
         
         <div className="text-center space-y-4 mb-16 relative">
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
             Speak naturally. <br className="hidden md:block" />
             <span className="text-gradient">Get grounded answers.</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Multilingual Voice-RAG powered by Sarvam AI, local FAISS vector search, and Groq's Llama 3.1.
-          </p>
         </div>
 
         <ChatInterface />
@@ -45,8 +43,8 @@ export default function Home() {
 
       {/* Premium Footer */}
       <footer className="w-full border-t border-border mt-auto">
-        <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <p>© 2026 HH Goa Hackathon Task 2</p>
+        <div className="w-full px-6 md:px-12 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <p>© 2026 Team Pikachu, HH Goa (Task 2)</p>
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />

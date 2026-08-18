@@ -1,0 +1,29 @@
+[
+  {
+    "text": "Toulouse, with around 1.2 million people in its metropolis, is the fourth biggest city in France (behind Paris, Lyon, and Marseille). But while it may not be the biggest, it's certainly the best, or at least that's what the evidence seems to suggest to us.",
+    "passage_id": "1089494_0",
+    "language": "english",
+    "source_query_id": "1089494",
+    "is_selected": 0,
+    "char_length": 256,
+    "chunk_strategy": "passage"
+  },
+  {
+    "text": "टूलूज़, जिसके महानगर में लगभग 12 लाख लोग रहते हैं, फ्रांस का चौथा सबसे बड़ा शहर है (पेरिस, ल्योन और मार्सिले के बाद)। लेकिन हालांकि यह सबसे बड़ा नहीं हो सकता है, यह निश्चित रूप से सबसे अच्छा है, या कम से कम ऐसा ही सबूत हमें लगता है।",
+    "passage_id": "1089494_0",
+    "language": "hindi",
+    "source_query_id": "1089494",
+    "is_selected": 0,
+    "char_length": 232,
+    "chunk_strategy": "passage"
+  },
+  {
+    "text": "ತೂಲೂಸ್, ಅದರ ಮಹಾನಗರದಲ್ಲಿ ಸುಮಾರು ೧.೨ ದಶಲಕ್ಷ ಜನರಿರುವ ಫ್ರಾನ್ಸ್‌ನ ನಾಲ್ಕನೇ ಅತಿದೊಡ್ಡ ನಗರವಾಗಿದೆ (ಪ್ಯಾರಿಸ್, ಲಿಯಾನ್ ಮತ್ತು ಮಾರ್ಸೈಲ್ ನಂತರ). ಆದರೆ ಅದು ಅತಿದೊಡ್ಡದಾಗಿರದಿದ್ದರೂ, ಅದು ಖಂಡಿತವಾಗಿಯೂ ಅತ್ಯುತ್ತಮವಾದುದು, ಅಥವಾ ಕನಿಷ್ಠ ಅದೇ ಸಾಕ್ಷ್ಯಾಧಾರವು ನಮಗೆ ಸೂಚಿಸುತ್ತದೆ.",
+    "passage_id": "1089494_0",
+    "language": "kannada",
+    "source_query_id": "1089494",
+    "is_selected": 0,
+    "char_length": 239,
+    "chunk_strategy": "passage"
+  }
+]

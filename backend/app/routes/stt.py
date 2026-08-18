@@ -15,6 +15,12 @@ logger = logging.getLogger(__name__)
 SARVAM_STT_URL = "https://api.sarvam.ai/speech-to-text"
 
 
+# Global persistent client for connection pooling (Requirement 8)
+_client = httpx.AsyncClient(
+    timeout=10.0,
+    limits=httpx.Limits(max_keepalive_connections=50, max_connections=100)
+)
+
 async def process_audio(audio_base64: str) -> Tuple[str, str, float]:
     """
     Sends base64-encoded audio to Sarvam AI saarika STT.
@@ -38,39 +44,38 @@ async def process_audio(audio_base64: str) -> Tuple[str, str, float]:
         raise ValueError("Failed to decode audio. Please try recording again.")
 
     try:
-        async with httpx.AsyncClient() as client:
-            files = {
-                # We assume a wav file for the boundary, Sarvam accepts multiple formats
-                "file": ("recording.wav", audio_bytes, "audio/wav")
-            }
-            data = {
-                # Using the latest saarika model as v1 is deprecated
-                "model": "saarika:v2.5"
-            }
-            headers = {
-                "api-subscription-key": settings.sarvam_api_key
-            }
+        files = {
+            # Map explicitly to webm to avoid server-side ffmpeg container conversion overhead,
+            # as the browser MediaRecorder natively outputs webm opus, even if the frontend blob is labeled wav.
+            "file": ("recording.webm", audio_bytes, "audio/webm")
+        }
+        data = {
+            # Using the latest saarika model as v1 is deprecated
+            "model": "saarika:v2.5"
+        }
+        headers = {
+            "api-subscription-key": settings.sarvam_api_key
+        }
+        
+        response = await _client.post(
+            SARVAM_STT_URL,
+            files=files,
+            data=data,
+            headers=headers
+        )
+        response.raise_for_status()
+        
+        resp_data = response.json()
+        # The transcript might be in 'transcript' or similar field depending on exact API shape
+        transcript = resp_data.get("transcript", "")
+        language = resp_data.get("language_code", "auto")
+        
+        t_total = (time.perf_counter() - t0) * 1000
+        
+        if not transcript:
+            raise ValueError("No speech detected.")
             
-            response = await client.post(
-                SARVAM_STT_URL,
-                files=files,
-                data=data,
-                headers=headers,
-                timeout=10.0
-            )
-            response.raise_for_status()
-            
-            resp_data = response.json()
-            # The transcript might be in 'transcript' or similar field depending on exact API shape
-            transcript = resp_data.get("transcript", "")
-            language = resp_data.get("language_code", "auto")
-            
-            t_total = (time.perf_counter() - t0) * 1000
-            
-            if not transcript:
-                raise ValueError("No speech detected.")
-                
-            return transcript, language, t_total
+        return transcript, language, t_total
             
     except httpx.HTTPStatusError as e:
         logger.error("Sarvam API error %d: %s", e.response.status_code, e.response.text)

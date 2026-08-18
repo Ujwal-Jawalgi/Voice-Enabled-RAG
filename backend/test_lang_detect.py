@@ -1,0 +1,59 @@
+import urllib.request
+import json
+import codecs
+
+url = 'http://127.0.0.1:8000/query'
+headers = {
+    'Content-Type': 'application/json'
+}
+
+queries = [
+    ("Bengali (Assamese)", "অসমীয়া"),
+    ("Gujarati", "ગુજરાતી"),
+    ("Tamil", "தமிழ்"),
+    ("Telugu", "తెలుగు"),
+    ("Malayalam", "മലയാളം"),
+    ("Odia", "ଓଡ଼ିଆ"),
+    ("Punjabi", "ਪੰਜਾਬੀ"),
+    ("Urdu", "اردو"),
+]
+
+def test_query(lang, text, out_file):
+    print(f"Testing {lang}...")
+    data = json.dumps({'text': text}).encode('utf-8')
+    req = urllib.request.Request(url, data=data, headers=headers)
+    
+    try:
+        response = urllib.request.urlopen(req)
+        body = response.read().decode('utf-8')
+        
+        final_data = None
+        for line in body.split("\n"):
+            if line.startswith("data: "):
+                try:
+                    parsed = json.loads(line[6:])
+                    if parsed.get("type") == "final":
+                        final_data = parsed.get("response")
+                except json.JSONDecodeError:
+                    pass
+        
+        with codecs.open(out_file, "a", "utf-8") as f:
+            f.write(f"### {lang}\n")
+            if final_data:
+                f.write(f"- Query: {text}\n")
+                f.write(f"- Detected Lang Param: {final_data.get('language')}\n\n")
+            else:
+                f.write("- Failed to get final response.\n\n")
+            
+    except Exception as e:
+        with codecs.open(out_file, "a", "utf-8") as f:
+            f.write(f"### {lang}\n")
+            f.write(f"- FAILED: {e}\n\n")
+
+if __name__ == "__main__":
+    out_file = "C:\\Users\\Lenovo\\.gemini\\antigravity-ide\\brain\\bac84837-44c3-4edc-9b11-b000ed784ce7\\lang_detect_test_results.md"
+    with codecs.open(out_file, "w", "utf-8") as f:
+        f.write("# Language Detection Test Results\n\n")
+        
+    for lang, text in queries:
+        test_query(lang, text, out_file)

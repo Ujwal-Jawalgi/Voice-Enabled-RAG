@@ -1,0 +1,29 @@
+[
+  {
+    "text": "What Bert Has To Say About Boston-Cambridge-Newton Metro Area. Boston is widely viewed as the intellectual and historic capital of the United States. It is a cosmopolitan city with a complete set of services, a broad range of amenities, and a rich tradition and culture almost unmatched in the rest of the country.",
+    "passage_id": "1047137_1",
+    "language": "english",
+    "source_query_id": "1047137",
+    "is_selected": 0,
+    "char_length": 314,
+    "chunk_strategy": "passage"
+  },
+  {
+    "text": "बोस्टन-कैम्ब्रिज-न्यूटन मेट्रो क्षेत्र के बारे में बर्ट का क्या कहना है। बोस्टन को व्यापक रूप से संयुक्त राज्य अमेरिका की बौद्धिक और ऐतिहासिक राजधानी के रूप में देखा जाता है। यह एक महानगरीय शहर है जिसमें सेवाओं का एक पूर्ण सेट, व्यापक सुविधाओं की श्रृंखला और देश के बाकी हिस्सों में लगभग मेल नहीं खाने वाली समृद्ध परंपरा और संस्कृति है।",
+    "passage_id": "1047137_1",
+    "language": "hindi",
+    "source_query_id": "1047137",
+    "is_selected": 0,
+    "char_length": 336,
+    "chunk_strategy": "passage"
+  },
+  {
+    "text": "ಬೋಸ್ಟನ್-ಕ್ಯಾಂಬ್ರಿಡ್ಜ್-ನ್ಯೂಟನ್ ಮೆಟ್ರೋ ಪ್ರದೇಶದ ಬಗ್ಗೆ ಬರ್ಟ್ ಏನು ಹೇಳಬೇಕು? ಬೋಸ್ಟನ್ ಅನ್ನು ವ್ಯಾಪಕವಾಗಿ ಅಮೆರಿಕಾ ಸಂಯುಕ್ತ ಸಂಸ್ಥಾನದ ಬೌದ್ಧಿಕ ಮತ್ತು ಐತಿಹಾಸಿಕ ರಾಜಧಾನಿಯಾಗಿ ಪರಿಗಣಿಸಲಾಗಿದೆ. ಇದು ಸಂಪೂರ್ಣ ಸೇವೆಗಳ ಸಮೂಹ, ವಿಶಾಲ ಶ್ರೇಣಿಯ ಸೌಲಭ್ಯಗಳು ಮತ್ತು ದೇಶದ ಉಳಿದ ಭಾಗಗಳಲ್ಲಿ ಬಹುತೇಕ ಸಮಾನವಾಗಿಲ್ಲದ ಶ್ರೀಮಂತ ಸಂಪ್ರದಾಯ ಮತ್ತು ಸಂಸ್ಕೃತಿಯೊಂದಿಗೆ ಒಂದು ಕಾಸ್ಮೋಪಾಲಿಟನ್ ನಗರವಾಗಿದೆ.",
+    "passage_id": "1047137_1",
+    "language": "kannada",
+    "source_query_id": "1047137",
+    "is_selected": 0,
+    "char_length": 333,
+    "chunk_strategy": "passage"
+  }
+]

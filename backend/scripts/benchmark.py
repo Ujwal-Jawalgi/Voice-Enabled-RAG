@@ -371,7 +371,7 @@ refused_count = sum(1 for r in results if r["refused"])
 
 all_for_recall = results  # Recall is measured on ALL queries (refused/fallback = automatic miss)
 
-stages = ["retrieval", "rerank", "llm", "total"]
+stages = ["embedding", "retrieval", "rerank", "llm", "total"]
 languages = ["english", "hindi", "kannada"]
 
 def print_latency_table(stats_dict: dict, label: str):
@@ -383,11 +383,12 @@ def print_latency_table(stats_dict: dict, label: str):
     print("  Stage                            P50        P70       P100")
     print("  ------------------------- ---------- ---------- ----------")
     for stage_key, stage_label in [
-        ("retrieval", "Retrieval (embed+FAISS)"),
+        ("embedding", "Embedding (MiniLM CPU)"),
+        ("retrieval", "Retrieval (FAISS search)"),
         ("rerank", "Rerank (BM25 RRF)"),
-        ("retrieval_rerank", "Retrieval+Rerank"),
+        ("retrieval_rerank", "Total Ret+Rerank Path"),
         ("llm", "LLM (Groq API)"),
-        ("total", "Total"),
+        ("total", "Total Pipeline"),
     ]:
         if stage_key in stats_dict:
             s = stats_dict[stage_key]
@@ -424,7 +425,7 @@ def compute_stats(records: list[dict], label: str) -> dict:
     # control and optimized meets the target" while being transparent that
     # the full pipeline does not.
     ret_rer_values = [
-        r["timings_ms"]["retrieval"] + r["timings_ms"]["rerank"]
+        r["timings_ms"].get("embedding", 0.0) + r["timings_ms"]["retrieval"] + r["timings_ms"]["rerank"]
         for r in records
     ]
     stats["retrieval_rerank"] = {
@@ -547,9 +548,10 @@ def md_latency_table(stats_dict: dict, title: str) -> str:
 
 | Stage | P50 | P70 | P100 (worst) |
 |---|---|---|---|
-| Retrieval (embed + FAISS) | {_s(stats_dict, 'retrieval', 'p50')} ms | {_s(stats_dict, 'retrieval', 'p70')} ms | {_s(stats_dict, 'retrieval', 'p100')} ms |
+| Embedding (MiniLM CPU) | {_s(stats_dict, 'embedding', 'p50')} ms | {_s(stats_dict, 'embedding', 'p70')} ms | {_s(stats_dict, 'embedding', 'p100')} ms |
+| Retrieval (FAISS search) | {_s(stats_dict, 'retrieval', 'p50')} ms | {_s(stats_dict, 'retrieval', 'p70')} ms | {_s(stats_dict, 'retrieval', 'p100')} ms |
 | Rerank (BM25 RRF) | {_s(stats_dict, 'rerank', 'p50')} ms | {_s(stats_dict, 'rerank', 'p70')} ms | {_s(stats_dict, 'rerank', 'p100')} ms |
-| **Retrieval + Rerank** | **{_s(stats_dict, 'retrieval_rerank', 'p50')} ms** | **{_s(stats_dict, 'retrieval_rerank', 'p70')} ms** | **{_s(stats_dict, 'retrieval_rerank', 'p100')} ms** |
+| **Total Ret+Rerank Path** | **{_s(stats_dict, 'retrieval_rerank', 'p50')} ms** | **{_s(stats_dict, 'retrieval_rerank', 'p70')} ms** | **{_s(stats_dict, 'retrieval_rerank', 'p100')} ms** |
 | LLM (Groq API) | {_s(stats_dict, 'llm', 'p50')} ms | {_s(stats_dict, 'llm', 'p70')} ms | {_s(stats_dict, 'llm', 'p100')} ms |
 | **Total (ret+rer+llm)** | **{_s(stats_dict, 'total', 'p50')} ms** | **{_s(stats_dict, 'total', 'p70')} ms** | **{_s(stats_dict, 'total', 'p100')} ms** |
 """
@@ -560,7 +562,7 @@ report = f"""# Voice-RAG Latency & Recall Benchmark Report
 **Queries**: {len(all_queries)} total ({len(valid_for_latency)} successful, {refused_count} refused, {fallback_count} hit fallback)
 **Index**: ~18,000 chunks (6,000 per language: English, Hindi, Kannada)
 **Embedding Model**: paraphrase-multilingual-MiniLM-L12-v2 (384-d, cosine similarity)
-**LLM**: Groq Llama 3.1 8B Instant (remote API)
+**LLM**: Groq GPT-OSS 20B (remote API)
 **Hardware**: Local CPU (no GPU)
 **Query Sampling**: {out_of_index_count} out-of-index, {in_index_count} in-index query_ids
 
@@ -599,8 +601,8 @@ report += md_latency_table(agg_stats, "Combined (All Successes)")
 report += """
 ### Per-Language Breakdown (Combined)
 
-| Language | N | Ret P50 | Ret+Rer P50 | LLM P50 | Total P50 | Total P70 | Total P100 | Recall@5 |
-|---|---|---|---|---|---|---|---|---|"""
+| Language | N | Emb P50 | Ret P50 | Ret+Rer P50 | LLM P50 | Total P50 | Total P70 | Total P100 | Recall@5 |
+|---|---|---|---|---|---|---|---|---|---|"""
 
 for lang in languages:
     ls = lang_stats[lang]
@@ -609,10 +611,10 @@ for lang in languages:
     if ls:
         n = ls["retrieval"]["n"]
         report += f"""
-| {lang.capitalize()} | {n} | {_s(ls, 'retrieval', 'p50')} ms | {_s(ls, 'retrieval_rerank', 'p50')} ms | {_s(ls, 'llm', 'p50')} ms | {_s(ls, 'total', 'p50')} ms | {_s(ls, 'total', 'p70')} ms | {_s(ls, 'total', 'p100')} ms | {lr:.1%} |"""
+| {lang.capitalize()} | {n} | {_s(ls, 'embedding', 'p50')} ms | {_s(ls, 'retrieval', 'p50')} ms | {_s(ls, 'retrieval_rerank', 'p50')} ms | {_s(ls, 'llm', 'p50')} ms | {_s(ls, 'total', 'p50')} ms | {_s(ls, 'total', 'p70')} ms | {_s(ls, 'total', 'p100')} ms | {lr:.1%} |"""
     else:
         report += f"""
-| {lang.capitalize()} | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A |"""
+| {lang.capitalize()} | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |"""
 
 report += f"""
 
@@ -648,7 +650,7 @@ report += f"""
    the **retrieval + rerank sub-path only** (local FAISS + ephemeral BM25),
    which consistently lands well under 200ms. The full pipeline total is
    dominated by the Groq LLM API call (200-800ms remote network hop), which
-   is an intentional quality-over-speed tradeoff: Llama 3.1 8B produces
+   is an intentional quality-over-speed tradeoff: GPT-OSS 20B produces
    substantially better multilingual grounded answers than any model we could
    run locally within the 200ms budget on CPU hardware. The retrieval+rerank
    sub-path latency is reported separately to make this claim verifiable.

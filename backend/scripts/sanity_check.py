@@ -21,15 +21,10 @@ def main():
     print("Loading SentenceTransformer model (paraphrase-multilingual-MiniLM-L12-v2)...")
     model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
 
-    import json
-    with open("query_412499.json", "r", encoding="utf-8") as f:
-        q_412499 = json.load(f)["q"]
-        
     queries = [
         "What is the capital of France?",
         "फ्रांस की राजधानी क्या है?", # Hindi: What is the capital of France?
-        "ಫ್ರಾನ್ಸ್ ರಾಜಧಾನಿ ಯಾವುದು?", # Kannada: What is the capital of France?
-        q_412499
+        "ಫ್ರಾನ್ಸ್ ರಾಜಧಾನಿ ಯಾವುದು?" # Kannada: What is the capital of France?
     ]
     for q in queries:
         print(f"\n{'='*60}\nQuery: {q}\n{'='*60}")

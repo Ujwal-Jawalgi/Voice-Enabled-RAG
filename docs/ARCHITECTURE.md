@@ -24,17 +24,17 @@
 - **Embedding Model**: `paraphrase-multilingual-MiniLM-L12-v2` (SentenceTransformers)
 - **Vector Database**: FAISS (`IndexFlatIP` for inner product / cosine similarity)
 - **Lexical Retriever**: BM25 (`rank_bm25`)
-- **LLM**: Llama 3.1 8B via Groq API
+- **LLM**: GPT-OSS 20B via Groq API
 - **Testing**: Pytest
 
 ## Pipeline Stages
 1. **Speech-to-Text (Optional)**: Audio is sent to the Sarvam API for transcription and language detection.
 2. **Input Guardrail**: The query is validated for length and disallowed patterns.
-3. **Embedding**: The text query is converted to a dense vector.
-4. **Retrieval**: FAISS retrieves the top 10 candidates using cosine similarity.
-5. **Off-Topic Guardrail**: If the top dense score is below `0.35`, the query is refused.
-6. **Rerank**: An ephemeral BM25 index is built over the 10 candidates. Dense and lexical ranks are fused using Reciprocal Rank Fusion (RRF) to select the top 5 passages.
-7. **Prompt Building & LLM**: The top 5 passages are injected into a prompt and sent to Groq. If the call times out (4.0s), it is retried once.
+3. **Embedding**: The text query is converted to a dense vector. (Optimized: multi-threading enabled for faster CPU encoding).
+4. **Retrieval**: FAISS retrieves the top 10 candidates using exact cosine similarity. (Optimized: `faiss.IO_FLAG_MMAP` removed to hold the 1 GB index fully in RAM).
+5. **Off-Topic Guardrail**: If the top dense score is below `0.60`, the query is refused.
+6. **Rerank**: An ephemeral BM25 index is built over the 10 candidates. Dense and lexical ranks are fused using Reciprocal Rank Fusion (RRF) to select the top 5 passages. (Optimized: global BM25 initialization removed, drastically cutting cold-start).
+7. **Prompt Building & LLM**: The top 5 passages are injected into a highly constrained ("1-2 sentences maximum") prompt and sent to Groq's GPT-OSS 20B API. If the call times out (4.0s), it is retried once.
 8. **Output Guardrail**: A lexical overlap check ensures the generated answer is grounded in the retrieved context.
 
 ## API Contract
@@ -52,7 +52,7 @@
 - `refused` (boolean): True if guardrails blocked the query.
 - `confidence` (string): `"high"` or `"low"`.
 - `llm_attempts` (integer): Number of LLM API attempts (1 or 2).
-- `timings_ms` (`Timings` object): Breakdown of latency (`stt`, `retrieval`, `rerank`, `llm`, `total`).
+- `timings_ms` (`Timings` object): Breakdown of latency (`stt`, `embedding`, `retrieval`, `rerank`, `llm`, `total`).
 
 ## Known Limitations
 The `off_topic_guardrail` (FAISS score threshold) can be bypassed by queries with incidental lexical/semantic overlap with unrelated corpus content (e.g. "bomb" and "recipe" both appear in different MSMARCO contexts, producing a top score of 0.54 despite no genuine topical match). In these cases, the `output_guardrail` (grounding check) serves as a second line of defense, correctly flagging low confidence when the LLM cannot ground its answer in the retrieved context. This demonstrates the value of layered guardrails rather than relying on retrieval-score thresholding alone.

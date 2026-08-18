@@ -2,11 +2,16 @@ from pydantic import BaseModel
 from typing import List, Optional, Literal
 
 class Timings(BaseModel):
-    stt: float
-    retrieval: float
-    rerank: float
-    llm: float
-    total: float
+    preprocessing: float = 0.0
+    stt: float = 0.0
+    embedding: float = 0.0
+    retrieval: float = 0.0
+    guardrails: float = 0.0
+    rerank: float = 0.0
+    llm_first_token: float = 0.0
+    llm: float = 0.0
+    tts_total: float = 0.0
+    total: float = 0.0
 
 class Source(BaseModel):
     passage_id: str
@@ -15,6 +20,7 @@ class Source(BaseModel):
 class QueryRequest(BaseModel):
     audio_base64: Optional[str] = None
     text: Optional[str] = None
+    session_id: Optional[str] = None
 
 class QueryResponse(BaseModel):
     transcript: str

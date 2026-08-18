@@ -1,14 +1,15 @@
 # Chunking and Subsampling Strategy
 
 ## Subsampling Decision
-The full Indic MSMARCO-XI dataset contains over 11.45 million passages across 14 languages. Processing, embedding, and hosting this entire dataset locally is infeasible within a 4-day hackathon deadline and hardware constraints.
+The full Indic MSMARCO-XI dataset contains over 11.45 million passages across 14 languages (plus English). Processing, embedding, and hosting this entire dataset locally is infeasible within a 4-day hackathon deadline and hardware constraints.
 
-**Decision**: We strategically subsampled the dataset to cover 3 major languages:
-- **English**: ~6,000 passages
-- **Hindi**: ~6,000 passages
-- **Kannada**: ~6,000 passages
+**Decision**: We strategically subsampled the dataset to cover all 15 languages at an asymmetric scale:
+- **English**: 150,000 passages
+- **Hindi**: 150,000 passages
+- **Kannada**: 150,000 passages
+- **12 remaining languages**: ~20,000 passages each (240,000 total)
 
-This yields a manageable corpus of ~18,000 passages that fits entirely in memory alongside the `paraphrase-multilingual-MiniLM-L12-v2` embedding model, ensuring lightning-fast retrieval times well within our 200ms latency budget.
+This yields a dense, multilingual corpus of **~690,000 passages**. The resulting 1.06 GB FAISS index fits entirely in RAM alongside the `paraphrase-multilingual-MiniLM-L12-v2` embedding model. This allows us to achieve local exact-search retrieval (Embedding + FAISS + BM25 RRF) in ~230ms on standard CPU hardware.
 
 ## Chunking Strategy
 Due to the context window limitations of dense embedding models, passages that are too long must be split.

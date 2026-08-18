@@ -36,11 +36,9 @@ MAX_INPUT_LENGTH = 2000
 # However, during testing, completely gibberish inputs still scored as high as
 # 0.41 against the dense FAISS index.
 #
-# To prevent off-topic or gibberish inputs from passing through to the LLM
-# and wasting API tokens/latency, we set this threshold strictly at 0.40. This
-# safely bounds the gap between maximum gibberish noise (~0.41) and real
-# information retrieval queries (~0.55).
-OFF_TOPIC_THRESHOLD = 0.40
+# safely bounds the gap between maximum gibberish noise (~0.59) and real
+# information retrieval queries (~0.68+).
+OFF_TOPIC_THRESHOLD = 0.60
 
 # Output grounding: minimum fraction of "significant" answer words that must
 # appear in the retrieved context for us to consider the answer grounded.

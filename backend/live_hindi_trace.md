@@ -1,0 +1,4 @@
+data: {"type": "source_preview", "text": "Goa is a former Portuguese province; the Portuguese overseas territory of Portuguese India existed for about 450 years until it was annexed by India in 1961. Goa is visited by large numbers of international and domestic tourists each year for its white sand beaches, nightlife, places of worship and world heritage architecture.", "elapsed_ms": 228.4, "passage_id": "992190_2", "score": 0.714}
+
+data: {"type": "final", "response": {"transcript": "\u0917\u094b\u0935\u093e \u0915\u0940 \u0930\u093e\u091c\u0927\u093e\u0928\u0940 \u0915\u094d\u092f\u093e \u0939\u0948?", "language": "hindi", "answer": "", "sources": [{"passage_id": "992190_2", "score": 0.714}, {"passage_id": "992190_8", "score": 0.5973}, {"passage_id": "1018036_3", "score": 0.6078}], "refused": false, "confidence": "low", "llm_attempts": 1, "timings_ms": {"stt": 0.0, "embedding": 54.52, "retrieval": 172.05, "rerank": 1.79, "llm": 741.06, "total": 969.42}}}
+

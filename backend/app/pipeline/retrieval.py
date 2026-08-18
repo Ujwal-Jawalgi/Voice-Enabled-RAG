@@ -8,6 +8,11 @@ Design rationale:
 """
 
 import os
+# Force single threading for math libs to prevent thread thrashing
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+
 import pickle
 import logging
 from dataclasses import dataclass
@@ -15,6 +20,7 @@ from dataclasses import dataclass
 import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -50,27 +56,36 @@ class Candidate:
 #   - MiniLM model ≈ 130 MB
 # ---------------------------------------------------------------------------
 try:
-    logger.info("Loading FAISS index from %s using MMAP", _INDEX_PATH)
-    _index: faiss.IndexFlatIP = faiss.read_index(_INDEX_PATH, faiss.IO_FLAG_MMAP) # type: ignore
-    logger.info("FAISS index loaded: %d vectors, dimension %d", _index.ntotal, _index.d)
+    logger.info("Loading FAISS index from %s", _INDEX_PATH)
+    _faiss_index: faiss.IndexFlatIP = faiss.read_index(_INDEX_PATH) # type: ignore
+    
+    # Bypass FAISS search on Windows/CPU due to severe OpenMP threading overhead (150-300ms).
+    # Extract vectors via reconstruct() to perform pure NumPy dot-product (<10ms).
+    _vectors = np.array([_faiss_index.reconstruct(i) for i in range(_faiss_index.ntotal)])
+    _index = True
+    logger.info("FAISS index loaded and vectors extracted: %d vectors, dimension %d", _faiss_index.ntotal, _faiss_index.d)
 
     logger.info("Loading metadata from %s", _META_PATH)
     with open(_META_PATH, "rb") as _f:
         _metadata: list[dict] = pickle.load(_f)
-    assert len(_metadata) == _index.ntotal, (
-        f"Metadata length ({len(_metadata)}) != index size ({_index.ntotal})"
+    assert len(_metadata) == _faiss_index.ntotal, (
+        f"Metadata length ({len(_metadata)}) != index size ({_faiss_index.ntotal})"
     )
 except Exception as e:
     logger.warning("Could not load index/metadata. App will start empty. Error: %s", e)
     _index = None
+    _vectors = None
     _metadata = []
 
 logger.info("Loading SentenceTransformer model: %s", _MODEL_NAME)
-import torch
 torch.set_grad_enabled(False)
-torch.set_num_threads(1)
 _model = SentenceTransformer(_MODEL_NAME)
 _model.eval()
+
+# Force PyTorch graph compilation to avoid 1s latency hit on first query
+logger.info("Warming up embedding model...")
+_model.encode(["warmup"], normalize_embeddings=True)
+
 logger.info("Retrieval module ready.")
 
 
@@ -80,29 +95,32 @@ logger.info("Retrieval module ready.")
 def embed_query(text: str) -> np.ndarray:
     """Embed a single query string into a normalized 384-d vector.
 
-    Returns shape (1, 384) ready for faiss.search().
-    Normalization ensures IndexFlatIP computes cosine similarity.
+    Returns shape (1, 384).
+    Normalization ensures dot product computes cosine similarity.
     """
     vec = _model.encode([text], normalize_embeddings=True)
     return vec.astype(np.float32) # type: ignore
 
 
-def search(query_vector: np.ndarray, k: int = 10) -> list[Candidate]:
-    """Search the FAISS index for the k nearest neighbours."""
-    if _index is None:
+def search(query_vector: np.ndarray, k: int = 5) -> list[Candidate]:
+    """Search the exact vector index for the k nearest neighbours."""
+    if _index is None or _vectors is None:
         logger.warning("Index is empty or missing, returning no results.")
         return []
         
-    distances, indices = _index.search(query_vector, k)
+    # Exact dot product search over 18k vectors is extremely fast in NumPy
+    # and bypasses FAISS OpenMP threading issues on Windows.
+    scores = np.dot(_vectors, query_vector[0])
+    
+    # Get top k indices
+    indices = np.argpartition(scores, -k)[-k:]
+    # Sort the top k by score descending
+    indices = indices[np.argsort(-scores[indices])]
 
     results: list[Candidate] = []
     for rank in range(k):
-        idx = int(indices[0][rank])
-        score = float(distances[0][rank])
-
-        if idx == -1:
-            # FAISS returns -1 when fewer than k results exist
-            continue
+        idx = int(indices[rank])
+        score = float(scores[idx])
 
         meta = _metadata[idx]
         results.append(Candidate(
