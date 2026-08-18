@@ -5,6 +5,7 @@ from app.pipeline.harness import run_pipeline
 
 from fastapi.responses import StreamingResponse
 import json
+import re
 
 router = APIRouter(tags=["query"])
 
@@ -24,9 +25,6 @@ LANGUAGE_MAP = {
     "od-IN": "odia",
     "ur-IN": "urdu"
 }
-
-import re
-
 def detect_language(text: str) -> str:
     """
     Detect language based on Unicode block of the text.

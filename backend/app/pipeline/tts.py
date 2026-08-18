@@ -39,6 +39,21 @@ LANGUAGE_MAP = {
     "urdu": "ur-IN"
 }
 
+import re
+
+def detect_language(text: str) -> str:
+    if re.search(r'[\u0900-\u097F]', text): return "hindi"
+    elif re.search(r'[\u0C80-\u0CFF]', text): return "kannada"
+    elif re.search(r'[\u0980-\u09FF]', text): return "bengali"
+    elif re.search(r'[\u0A80-\u0AFF]', text): return "gujarati"
+    elif re.search(r'[\u0B80-\u0BFF]', text): return "tamil"
+    elif re.search(r'[\u0C00-\u0C7F]', text): return "telugu"
+    elif re.search(r'[\u0D00-\u0D7F]', text): return "malayalam"
+    elif re.search(r'[\u0B00-\u0B7F]', text): return "odia"
+    elif re.search(r'[\u0A00-\u0A7F]', text): return "punjabi"
+    elif re.search(r'[\u0600-\u06FF]', text): return "urdu"
+    else: return "english"
+
 async def generate_audio(text: str, language: str) -> str:
     """
     Sends text to Sarvam AI TTS and returns base64-encoded audio.
@@ -48,7 +63,13 @@ async def generate_audio(text: str, language: str) -> str:
         return ""
         
     client = get_client()
-    lang_code = LANGUAGE_MAP.get(language.lower(), "en-IN")
+    
+    # Auto-detect script to prevent Sarvam TTS from failing on script mismatches.
+    actual_lang = detect_language(text)
+    # If the detected language is English but the user asked in another language, 
+    # we can fall back to the requested language if it's transliterated, but generally Sarvam fails if script is wrong.
+    # To be safe, we just use actual_lang.
+    lang_code = LANGUAGE_MAP.get(actual_lang, "en-IN")
     
     payload = {
         "text": text,
