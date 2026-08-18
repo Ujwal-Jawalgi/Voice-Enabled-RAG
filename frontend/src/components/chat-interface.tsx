@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useLayoutEffect, startTransition } from "react";
+import { useState, useEffect, useLayoutEffect, startTransition, useRef } from "react";
 import { AudioRecorder } from "./audio-recorder";
-import { Send, ShieldAlert, Clock, BookOpen, AlertTriangle, Menu, Zap, Sparkles } from "lucide-react";
+import { Send, ShieldAlert, Clock, BookOpen, AlertTriangle, Menu, Zap, Sparkles, Volume2, VolumeX } from "lucide-react";
 
 interface QueryResponse {
   transcript: string;
@@ -38,6 +38,14 @@ export function ChatInterface() {
   const [sourcePreview, setSourcePreview] = useState<{text: string, elapsed_ms: number, passage_id: string, score: number} | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [latencies, setLatencies] = useState<number[]>([]);
+
+  // TTS Mute / Unmute State (Default: ON / not muted)
+  const [isTtsMuted, setIsTtsMuted] = useState<boolean>(false);
+  const isTtsMutedRef = useRef<boolean>(false);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const audioChunksRef = useRef<string[]>([]);
+  const currentChunkIndexRef = useRef<number>(0);
+  const isPlayingRef = useRef<boolean>(false);
 
   const getPercentile = (arr: number[], p: number) => {
     if (arr.length === 0) return 0;
@@ -88,42 +96,97 @@ export function ChatInterface() {
     }
   }, [sessionId]);
 
+  const playNextChunk = () => {
+    if (isTtsMutedRef.current) {
+      isPlayingRef.current = false;
+      return;
+    }
+    if (currentChunkIndexRef.current >= audioChunksRef.current.length) {
+      isPlayingRef.current = false;
+      return;
+    }
+    isPlayingRef.current = true;
+    const base64 = audioChunksRef.current[currentChunkIndexRef.current];
+    if (!base64) {
+      currentChunkIndexRef.current += 1;
+      playNextChunk();
+      return;
+    }
+    try {
+      const audio = new Audio(`data:audio/wav;base64,${base64}`);
+      currentAudioRef.current = audio;
+      audio.onended = () => {
+        currentAudioRef.current = null;
+        currentChunkIndexRef.current += 1;
+        playNextChunk();
+      };
+      audio.onerror = (e) => {
+        console.error("Audio playback failed", e);
+        currentAudioRef.current = null;
+        currentChunkIndexRef.current += 1;
+        playNextChunk();
+      };
+      audio.play().catch((e) => {
+        console.error("Audio play failed", e);
+        currentAudioRef.current = null;
+        currentChunkIndexRef.current += 1;
+        playNextChunk();
+      });
+    } catch (e) {
+      console.error("Audio creation failed", e);
+      currentAudioRef.current = null;
+      currentChunkIndexRef.current += 1;
+      playNextChunk();
+    }
+  };
+
+  const toggleTts = () => {
+    const nextMuted = !isTtsMuted;
+    setIsTtsMuted(nextMuted);
+    isTtsMutedRef.current = nextMuted;
+
+    if (nextMuted) {
+      // Immediately stop/mute the speech
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+      }
+      isPlayingRef.current = false;
+    } else {
+      // Resume speaking from current audio or next in queue
+      if (currentAudioRef.current && currentAudioRef.current.paused && !currentAudioRef.current.ended) {
+        isPlayingRef.current = true;
+        currentAudioRef.current.play().catch((e) => {
+          console.error("Audio resume error", e);
+          currentAudioRef.current = null;
+          currentChunkIndexRef.current += 1;
+          playNextChunk();
+        });
+      } else if (currentChunkIndexRef.current < audioChunksRef.current.length) {
+        playNextChunk();
+      }
+    }
+  };
+
   const handleQuery = async (payload: { text?: string; audio_base64?: string }) => {
     setIsLoading(true);
     setError(null);
     setResponse(null);
     setSourcePreview(null);
 
+    // Stop any existing audio and reset chunk queue for this query
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+    }
+    audioChunksRef.current = [];
+    currentChunkIndexRef.current = 0;
+    isPlayingRef.current = false;
+
     const userText = payload.text || "Audio recording";
     const newMessages: Message[] = [...messages, { role: "user" as const, text: userText }];
     setMessages(newMessages);
 
     let currentPreview: {text: string, elapsed_ms: number, passage_id: string, score: number} | null = null;
-    const audioQueue: string[] = [];
-    let isPlaying = false;
-
-    const playNextAudio = async () => {
-      if (isPlaying || audioQueue.length === 0) return;
-      isPlaying = true;
-      const base64 = audioQueue.shift();
-      if (base64) {
-        try {
-          const audio = new Audio(`data:audio/wav;base64,${base64}`);
-          audio.onended = () => {
-            isPlaying = false;
-            playNextAudio();
-          };
-          await audio.play();
-        } catch (e) {
-          console.error("Audio playback failed", e);
-          isPlaying = false;
-          playNextAudio();
-        }
-      } else {
-        isPlaying = false;
-        playNextAudio();
-      }
-    };
 
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
@@ -161,8 +224,10 @@ export function ChatInterface() {
                 const updatedMessages = [...newMessages, { role: "assistant" as const, sourcePreview: currentPreview }];
                 setMessages(updatedMessages);
               } else if (data.type === "audio" && data.audio_base64) {
-                audioQueue.push(data.audio_base64);
-                playNextAudio();
+                audioChunksRef.current.push(data.audio_base64);
+                if (!isPlayingRef.current && !isTtsMutedRef.current) {
+                  playNextChunk();
+                }
               } else if (data.type === "final" && data.response) {
                 setResponse(data.response);
                 const updatedMessages = [...newMessages, { role: "assistant" as const, data: data.response, sourcePreview: currentPreview || undefined }];
@@ -321,11 +386,29 @@ export function ChatInterface() {
                     <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
                       <Zap className="w-3.5 h-3.5" /> Top retrieved source
                     </span>
-                    {(sourcePreview?.elapsed_ms || 0) > 0 && (
-                      <span className="text-xs font-mono text-indigo-500 bg-indigo-100 dark:bg-indigo-900/40 px-2 py-0.5 rounded">
-                        {(sourcePreview!.elapsed_ms*0.1).toFixed(1)} ms
-                      </span>
-                    )}
+                    <button
+                      type="button"
+                      onClick={toggleTts}
+                      className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 text-xs font-medium border ${
+                        isTtsMuted
+                          ? "bg-zinc-100 dark:bg-zinc-800/80 text-zinc-500 border-zinc-200 dark:border-zinc-700 hover:text-zinc-800 dark:hover:text-zinc-200"
+                          : "bg-indigo-100/80 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/60 hover:bg-indigo-200/80 dark:hover:bg-indigo-900/70"
+                      }`}
+                      aria-label={isTtsMuted ? "Enable text-to-speech" : "Mute text-to-speech"}
+                      title={isTtsMuted ? "Enable text-to-speech" : "Mute text-to-speech"}
+                    >
+                      {isTtsMuted ? (
+                        <>
+                          <VolumeX className="w-3.5 h-3.5" />
+                          <span className="text-[11px] font-semibold tracking-wide">Muted</span>
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 className="w-3.5 h-3.5 text-indigo-500 animate-pulse" />
+                          <span className="text-[11px] font-semibold tracking-wide">TTS ON</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                   <p className="text-base leading-relaxed text-indigo-900 dark:text-indigo-100 font-medium">
                     {sourcePreview?.text}
