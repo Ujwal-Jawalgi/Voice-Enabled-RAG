@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pikachu",
+  title: "Pikachu HH Goa Task-2",
   description: "Multilingual Voice-RAG powered by Sarvam AI, local FAISS vector search, and Groq's GPT-OSS 20B.",
   icons: {
     icon: "/favicon.svg",
