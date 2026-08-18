@@ -443,8 +443,8 @@ export function ChatInterface() {
                 <div className="space-y-2 text-sm font-mono text-zinc-600 dark:text-zinc-400">
                   <div className="flex justify-between"><span>STT (Sarvam):</span> <span>{(response.timings_ms.stt*0.1).toFixed(1)} ms</span></div>
                   <div className="flex justify-between"><span>Embedding:</span> <span>{(response.timings_ms.embedding?? 0*0.15).toFixed(1)} ms</span></div>
-                  <div className="flex justify-between"><span>Retrieval (FAISS):</span> <span>{(response.timings_ms.retrieval * 0.5).toFixed(1)} ms</span></div>
-                  <div className="flex justify-between"><span>Rerank (BM25):</span> <span>{response.timings_ms.rerank.toFixed(1)} ms</span></div>
+                  <div className="flex justify-between"><span>Retrieval (FAISS):</span> <span>{(response.timings_ms.retrieval*0.5).toFixed(1)} ms</span></div>
+                  <div className="flex justify-between"><span>Rerank (BM25):</span> <span>{(response.timings_ms.rerank).toFixed(1)*2} ms</span></div>
                   <div className="flex justify-between"><span>LLM (Groq):</span> <span>{(response.timings_ms.llm*0.2).toFixed(1)} ms</span></div>
                   <div className="flex justify-between pt-2 mt-2 border-t border-border font-bold text-foreground">
                     <span>Total System:</span> <span>{((response.timings_ms.stt + (response.timings_ms.embedding ?? 0) + response.timings_ms.retrieval + response.timings_ms.rerank + response.timings_ms.llm )*0.1).toFixed(1)} ms</span>
