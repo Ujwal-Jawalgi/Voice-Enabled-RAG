@@ -458,15 +458,15 @@ export function ChatInterface() {
                     <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono">
                       <div className="bg-muted rounded p-1.5 border border-border">
                         <div className="text-[10px] text-muted-foreground">P50</div>
-                        <div className="font-medium text-foreground">{(p50*0.1).toFixed(1)} ms</div>
+                        <div className="font-medium text-foreground">{p50.toFixed(1)} ms</div>
                       </div>
                       <div className="bg-muted rounded p-1.5 border border-border">
                         <div className="text-[10px] text-muted-foreground">P70</div>
-                        <div className="font-medium text-foreground">{(p70*0.1).toFixed(1)} ms</div>
+                        <div className="font-medium text-foreground">{p70.toFixed(1)} ms</div>
                       </div>
                       <div className="bg-muted rounded p-1.5 border border-border">
                         <div className="text-[10px] text-muted-foreground">P100</div>
-                        <div className="font-medium text-foreground">{(p100*0.1).toFixed(1)} ms</div>
+                        <div className="font-medium text-foreground">{p100.toFixed(1)} ms</div>
                       </div>
                     </div>
                   </div>
