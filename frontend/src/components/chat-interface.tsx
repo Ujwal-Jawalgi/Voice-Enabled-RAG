@@ -251,7 +251,7 @@ export function ChatInterface() {
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl" />
 
           <div className="text-center z-10 space-y-2 px-2 md:px-0">
-            <h2 className="text-lg md:text-2xl font-bold text-foreground">Ask anything in English, Hindi, or Kannada</h2>
+            <h2 className="text-lg md:text-2xl font-bold text-foreground">Ask anything in 15 supported Indic languages</h2>
             <p className="text-xs md:text-base text-muted-foreground">Speak naturally or type your question below.</p>
           </div>
 
