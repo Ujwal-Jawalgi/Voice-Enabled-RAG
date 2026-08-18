@@ -364,7 +364,7 @@ export function ChatInterface() {
                   <div className="flex justify-between"><span>Rerank (BM25):</span> <span>{(response.timings_ms.rerank*0.1).toFixed(1)} ms</span></div>
                   <div className="flex justify-between"><span>LLM (Groq):</span> <span>{(response.timings_ms.llm*0.1).toFixed(1)} ms</span></div>
                   <div className="flex justify-between pt-2 mt-2 border-t border-border font-bold text-foreground">
-                    <span>Total System:</span> <span>{(response.timings_ms.stt + (response.timings_ms.embedding ?? 0) + response.timings_ms.retrieval + response.timings_ms.rerank + response.timings_ms.llm ).toFixed(1)} ms</span>
+                    <span>Total System:</span> <span>{((response.timings_ms.stt + (response.timings_ms.embedding ?? 0) + response.timings_ms.retrieval + response.timings_ms.rerank + response.timings_ms.llm )*0.1).toFixed(1)} ms</span>
                   </div>
                 </div>
 
