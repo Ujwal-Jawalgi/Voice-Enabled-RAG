@@ -9,7 +9,7 @@
 Pikachu is a voice-enabled, multilingual Retrieval-Augmented Generation (RAG) system. Ask a question out loud (or type it) in any of **15 Indic languages**, and it transcribes your speech, retrieves the most relevant passages from a **7,00,000-chunk unified vector index**, and generates a grounded, guardrailed answer - with full latency transparency at every stage.
 
 🌐 **Live Demo:** `https://voice-enabled-rag.vercel.app/`
-📂 **Backend Repo:** `pikchau-rag.up.railway.app`
+📂 **Backend Repo:** `https://github.com/Ujwal-Jawalgi/Voice-Enabled-RAG`
 
 ---
 
