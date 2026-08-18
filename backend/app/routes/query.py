@@ -12,7 +12,17 @@ router = APIRouter(tags=["query"])
 LANGUAGE_MAP = {
     "en-IN": "english",
     "hi-IN": "hindi",
-    "kn-IN": "kannada"
+    "kn-IN": "kannada",
+    "pa-IN": "punjabi",
+    "ta-IN": "tamil",
+    "te-IN": "telugu",
+    "mr-IN": "marathi",
+    "bn-IN": "bengali",
+    "gu-IN": "gujarati",
+    "ml-IN": "malayalam",
+    "or-IN": "odia",
+    "od-IN": "odia",
+    "ur-IN": "urdu"
 }
 
 import re

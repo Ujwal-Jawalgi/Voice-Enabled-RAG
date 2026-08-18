@@ -27,7 +27,16 @@ def get_client() -> httpx.AsyncClient:
 LANGUAGE_MAP = {
     "english": "en-IN",
     "hindi": "hi-IN",
-    "kannada": "kn-IN"
+    "kannada": "kn-IN",
+    "punjabi": "pa-IN",
+    "tamil": "ta-IN",
+    "telugu": "te-IN",
+    "marathi": "mr-IN",
+    "bengali": "bn-IN",
+    "gujarati": "gu-IN",
+    "malayalam": "ml-IN",
+    "odia": "or-IN",
+    "urdu": "ur-IN"
 }
 
 async def generate_audio(text: str, language: str) -> str:
