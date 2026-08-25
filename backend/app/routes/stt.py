@@ -23,7 +23,7 @@ _client = httpx.AsyncClient(
 
 async def process_audio(audio_base64: str) -> Tuple[str, str, float]:
     """
-    Sends base64-encoded audio to Sarvam AI saarika STT.
+    Sends base64-encoded audio to Sarvam AI saaras STT.
     
     Returns:
         tuple of (transcript: str, language: str, stt_time_ms: float)
@@ -50,8 +50,9 @@ async def process_audio(audio_base64: str) -> Tuple[str, str, float]:
             "file": ("recording.webm", audio_bytes, "audio/webm")
         }
         data = {
-            # Using the latest saarika model as v1 is deprecated
-            "model": "saarika:v2.5"
+            # Using the latest saaras model as saarika is deprecated
+            "model": "saaras:v3",
+            "mode": "transcribe"
         }
         headers = {
             "api-subscription-key": settings.sarvam_api_key
