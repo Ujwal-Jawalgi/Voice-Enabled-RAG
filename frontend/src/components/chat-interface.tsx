@@ -442,7 +442,7 @@ export function ChatInterface() {
                 </div>
                 <div className="space-y-2 text-sm font-mono text-zinc-600 dark:text-zinc-400">
                   <div className="flex justify-between"><span>STT (Sarvam):</span> <span>{response.timings_ms.stt.toFixed(1)} ms</span></div>
-                  <div className="flex justify-between"><span>Embedding:</span> <span>{response.timings_ms.embedding??.toFixed(1)} ms</span></div>
+                  <div className="flex justify-between"><span>Embedding:</span> <span>{response.timings_ms.embedding ?? 0.toFixed(1)} ms</span></div>
                   <div className="flex justify-between"><span>Retrieval (FAISS):</span> <span>{response.timings_ms.retrieval.toFixed(1)} ms</span></div>
                   <div className="flex justify-between"><span>Rerank (BM25):</span> <span>{response.timings_ms.rerank.toFixed(1)} ms</span></div>
                   <div className="flex justify-between"><span>LLM (Groq):</span> <span>{response.timings_ms.llm.toFixed(1)} ms</span></div>
