@@ -1,5 +1,5 @@
 """
-stt.py — Sarvam AI Speech-to-Text integration.
+stt.py — Groq Whisper Speech-to-Text integration.
 """
 
 import base64
@@ -12,7 +12,7 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-SARVAM_STT_URL = "https://api.sarvam.ai/speech-to-text"
+GROQ_STT_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 
 
 # Global persistent client for connection pooling (Requirement 8)
@@ -23,7 +23,7 @@ _client = httpx.AsyncClient(
 
 async def process_audio(audio_base64: str) -> Tuple[str, str, float]:
     """
-    Sends base64-encoded audio to Sarvam AI saaras STT.
+    Sends base64-encoded audio to Groq Whisper STT.
     
     Returns:
         tuple of (transcript: str, language: str, stt_time_ms: float)
@@ -45,21 +45,19 @@ async def process_audio(audio_base64: str) -> Tuple[str, str, float]:
 
     try:
         files = {
-            # Map explicitly to webm to avoid server-side ffmpeg container conversion overhead,
-            # as the browser MediaRecorder natively outputs webm opus, even if the frontend blob is labeled wav.
+            # Groq Whisper supports webm directly
             "file": ("recording.webm", audio_bytes, "audio/webm")
         }
         data = {
-            # Using the latest saaras model as saarika is deprecated
-            "model": "saaras:v3",
-            "mode": "transcribe"
+            "model": "whisper-large-v3",
+            "response_format": "verbose_json"
         }
         headers = {
-            "api-subscription-key": settings.sarvam_api_key
+            "Authorization": f"Bearer {settings.groq_api_key}"
         }
         
         response = await _client.post(
-            SARVAM_STT_URL,
+            GROQ_STT_URL,
             files=files,
             data=data,
             headers=headers
@@ -67,9 +65,9 @@ async def process_audio(audio_base64: str) -> Tuple[str, str, float]:
         response.raise_for_status()
         
         resp_data = response.json()
-        # The transcript might be in 'transcript' or similar field depending on exact API shape
-        transcript = resp_data.get("transcript", "")
-        language = resp_data.get("language_code", "auto")
+        transcript = resp_data.get("text", "")
+        # Groq returns capitalized language name, we lower it for consistency
+        language = resp_data.get("language", "auto").lower()
         
         t_total = (time.perf_counter() - t0) * 1000
         
@@ -79,7 +77,7 @@ async def process_audio(audio_base64: str) -> Tuple[str, str, float]:
         return transcript, language, t_total
             
     except httpx.HTTPStatusError as e:
-        logger.error("Sarvam API error %d: %s", e.response.status_code, e.response.text)
+        logger.error("Groq API error %d: %s", e.response.status_code, e.response.text)
         raise ValueError("Speech transcription service is currently unavailable. Please try again.")
     except Exception as e:
         logger.error("STT network error: %s", e)

@@ -58,8 +58,8 @@ async def handle_query(req: QueryRequest):
     if req.audio_base64:
         try:
             transcript, raw_lang, stt_time_ms = await process_audio(req.audio_base64)
-            # Map the language or fallback to english
-            language = LANGUAGE_MAP.get(raw_lang, "english")
+            # Map the language or fallback to the raw_lang (Groq returns lowercase language names like 'english', 'hindi')
+            language = LANGUAGE_MAP.get(raw_lang, raw_lang)
         except ValueError as e:
             # STT failure should just ask the user to retry the recording, returning a typed refusal
             error_msg = str(e)
