@@ -9,3 +9,5 @@ groq
 pytest==7.4.3
 requests==2.31.0
 redis
+
+slowapi==0.1.9

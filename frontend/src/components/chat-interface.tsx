@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useLayoutEffect, startTransition, useRef } from "react";
 import { AudioRecorder } from "./audio-recorder";
-import { Send, ShieldAlert, Clock, BookOpen, AlertTriangle, Menu, Zap, Sparkles, Volume2, VolumeX } from "lucide-react";
+import { Send, ShieldAlert, Clock, AlertTriangle, Menu, Zap, Sparkles, Volume2, VolumeX } from "lucide-react";
 
 interface QueryResponse {
   transcript: string;
@@ -432,21 +432,21 @@ export function ChatInterface() {
                 </p>
               </div>
 
-              {/* Metrics & Sources Accordion */}
-              <div className="mt-4 pt-6 border-t border-border grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Metrics Accordion */}
+              <div className="mt-4 pt-6 border-t border-border">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Clock className="w-4 h-4" />
                     <h4 className="text-sm font-semibold uppercase tracking-wider">Latency Breakdown</h4>
                   </div>
                   <div className="space-y-2 text-sm font-mono text-zinc-600 dark:text-zinc-400">
-                    <div className="flex justify-between"><span>STT (Sarvam):</span> <span>{(response.timings_ms.stt*0.1).toFixed(1)} ms</span></div>
+                    <div className="flex justify-between"><span>STT (Sarvam):</span> <span>{(response.timings_ms.stt).toFixed(1)} ms</span></div>
                     <div className="flex justify-between"><span>Embedding:</span> <span>{(response.timings_ms.embedding ?? 0).toFixed(1)} ms</span></div>
                     <div className="flex justify-between"><span>Retrieval (FAISS):</span> <span>{(response.timings_ms.retrieval).toFixed(1)} ms</span></div>
                     <div className="flex justify-between"><span>Rerank (BM25):</span> <span>{(response.timings_ms.rerank).toFixed(1)} ms</span></div>
                     <div className="flex justify-between"><span>LLM (Groq):</span> <span>{(response.timings_ms.llm).toFixed(1)} ms</span></div>
                     <div className="flex justify-between pt-2 mt-2 border-t border-border font-bold text-foreground">
-                        <span>Total System:</span> <span>{((response.timings_ms.stt + response.timings_ms.llm) * 0.1) + (response.timings_ms.embedding ?? 0) + response.timings_ms.retrieval + response.timings_ms.rerank .toFixed(1)} ms</span>
+                        <span>Total System:</span> <span>{(response.timings_ms.total ?? (response.timings_ms.stt + (response.timings_ms.embedding ?? 0) + response.timings_ms.retrieval + response.timings_ms.rerank + response.timings_ms.llm)).toFixed(1)} ms</span>
                     </div>
                   </div>
 
@@ -472,24 +472,7 @@ export function ChatInterface() {
                   )}
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <BookOpen className="w-4 h-4" />
-                    <h4 className="text-sm font-semibold uppercase tracking-wider">Sources Retrieved</h4>
-                  </div>
-                  {response.sources.length === 0 ? (
-                    <p className="text-sm text-muted-foreground italic">No sources retrieved.</p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {response.sources.map((s, idx) => (
-                        <li key={idx} className="flex justify-between text-sm bg-background/50 px-3 py-2 rounded-lg border border-border">
-                          <span className="font-mono text-indigo-500 truncate mr-4" title={s.passage_id}>{s.passage_id}</span>
-                          <span className="text-muted-foreground tabular-nums">{s.score.toFixed(3)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+
               </div>
 
               {/* Move Product Description (Requirement 5) */}

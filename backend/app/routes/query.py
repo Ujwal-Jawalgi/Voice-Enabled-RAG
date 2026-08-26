@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
+from app.config import limiter
 from app.models.schemas import QueryRequest, QueryResponse, Timings
 from app.routes.stt import process_audio
 from app.pipeline.harness import run_pipeline
@@ -54,7 +55,8 @@ def detect_language(text: str) -> str:
         return "english"
 
 @router.post("/query")
-async def handle_query(req: QueryRequest):
+@limiter.limit("60/minute")
+async def handle_query(req: QueryRequest, request: Request):
     if req.audio_base64:
         try:
             transcript, raw_lang, stt_time_ms = await process_audio(req.audio_base64)
