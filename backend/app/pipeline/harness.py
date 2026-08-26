@@ -122,22 +122,22 @@ async def run_pipeline(
     # Stage 1: Input Guardrail
     t0 = time.perf_counter()
     ok, reason = input_guardrail(transcript)
-    timings["guardrails"] += (time.perf_counter() - t0) * 100
+    timings["guardrails"] += (time.perf_counter() - t0) * 1000
     
     if not ok:
-        timings["total"] = (time.perf_counter() - t_pipeline_start) * 100
+        timings["total"] = (time.perf_counter() - t_pipeline_start) * 1000 + stt_time_ms
         yield sse("final", {"response": _refusal_response_dict(transcript, language, reason or "Invalid input", timings)})
         return
 
     # Stage 2: Embed Query
     t0 = time.perf_counter()
     query_vector = embed_query(transcript)
-    t_embed = (time.perf_counter() - t0) * 100
+    t_embed = (time.perf_counter() - t0) * 1000
 
     # Stage 3: Retrieve
     t0 = time.perf_counter()
     candidates: list[Candidate] = search(query_vector, k=5)
-    t_retrieve = (time.perf_counter() - t0) * 100
+    t_retrieve = (time.perf_counter() - t0) * 1000
     timings["embedding"] = t_embed
     timings["retrieval"] = t_retrieve
 
@@ -145,17 +145,17 @@ async def run_pipeline(
     t0 = time.perf_counter()
     top_score = candidates[0].score if candidates else 0.0
     is_off_topic = off_topic_guardrail(top_score)
-    timings["guardrails"] += (time.perf_counter() - t0) * 100
+    timings["guardrails"] += (time.perf_counter() - t0) * 1000
     
     if is_off_topic:
-        timings["total"] = (time.perf_counter() - t_pipeline_start) * 100
+        timings["total"] = (time.perf_counter() - t_pipeline_start) * 1000 + stt_time_ms
         yield sse("final", {"response": _refusal_response_dict(transcript, language, f"Query appears off-topic (best match score: {top_score:.3f})", timings)})
         return
 
     # Stage 5: Rerank
     t0 = time.perf_counter()
     reranked: list[Candidate] = rerank(transcript, candidates)
-    t_rerank = (time.perf_counter() - t0) * 100
+    t_rerank = (time.perf_counter() - t0) * 1000
     timings["rerank"] = t_rerank
 
     # Yield raw extraction immediately (Requirement for <50ms latency)
@@ -193,19 +193,19 @@ async def run_pipeline(
     
     async for token in llm_stream(prompt, language, transcript):
         if not full_answer_parts:
-            timings["llm_first_token"] = (time.perf_counter() - t0) * 100
+            timings["llm_first_token"] = (time.perf_counter() - t0) * 1000
         full_answer_parts.append(token)
         yield sse("text", {"token": token})
         
     answer = "".join(full_answer_parts).strip()
     
-    t_llm = (time.perf_counter() - t0) * 100
+    t_llm = (time.perf_counter() - t0) * 1000
     timings["llm"] = t_llm
 
     # Stage 8: Output Guardrail
     t0_out = time.perf_counter()
     grounded, confidence = output_guardrail(answer, context_chunks)
-    timings["guardrails"] += (time.perf_counter() - t0_out) * 100
+    timings["guardrails"] += (time.perf_counter() - t0_out) * 1000
 
     if session_id:
         append_history(session_id, transcript, answer)
@@ -216,7 +216,7 @@ async def run_pipeline(
     rer_t = timings.get("rerank", 0.0)
     llm_t = timings.get("llm", 0.0)
     
-    timings["total"] = (time.perf_counter() - t_pipeline_start) * 100
+    timings["total"] = (time.perf_counter() - t_pipeline_start) * 1000 + stt_time_ms
     
     sources = [Source(passage_id=c.passage_id, score=round(c.score, 4)) for c in reranked]
     
@@ -253,4 +253,4 @@ async def run_pipeline(
             yield sse("audio", {"sentence": s, "audio_base64": audio_b64})
         except Exception as e:
             logger.error(f"TTS parallel generation failed for sentence: {e}")
-    timings["tts_total"] = (time.perf_counter() - t0_tts) * 100
+    timings["tts_total"] = (time.perf_counter() - t0_tts) * 1000
