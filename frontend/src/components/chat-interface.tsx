@@ -190,7 +190,7 @@ export function ChatInterface() {
     let currentPreview: { text: string, elapsed_ms: number, passage_id: string, score: number } | null = null;
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
       const apiPayload = { ...payload, session_id: sessionId };
 
       const res = await fetch(`${baseUrl}/query`, {
