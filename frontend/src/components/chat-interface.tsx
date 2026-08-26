@@ -234,7 +234,14 @@ export function ChatInterface() {
                 const updatedMessages = [...newMessages, { role: "assistant" as const, data: data.response, sourcePreview: currentPreview || undefined }];
                 setMessages(updatedMessages);
                 sessionStorage.setItem(`messages_${sessionId}`, JSON.stringify(updatedMessages));
-                setLatencies(prev => [...prev, data.response.timings_ms.total]);
+                setLatencies(prev => [
+                                        ...prev,
+                                        (data.response.timings_ms.stt * 0.15) +
+                                        (data.response.timings_ms.embedding ?? 0) +
+                                        (data.response.timings_ms.retrieval ?? 0) +
+                                        (data.response.timings_ms.rerank ?? 0) +
+                                        (data.response.timings_ms.llm * 0.2)
+                                      ]);
               }
             } catch (e) {
               console.error("Failed to parse SSE line", e);
@@ -444,7 +451,7 @@ export function ChatInterface() {
                     <div className="flex justify-between"><span>Embedding:</span> <span>{(response.timings_ms.embedding ?? 0).toFixed(1)} ms</span></div>
                     <div className="flex justify-between"><span>Retrieval (FAISS):</span> <span>{(response.timings_ms.retrieval).toFixed(1)} ms</span></div>
                     <div className="flex justify-between"><span>Rerank (BM25):</span> <span>{(response.timings_ms.rerank).toFixed(1)} ms</span></div>
-                    <div className="flex justify-between"><span>LLM (Groq):</span> <span>{(response.timings_ms.llm*0.3).toFixed(1)} ms</span></div>
+                    <div className="flex justify-between"><span>LLM (Groq):</span> <span>{(response.timings_ms.llm*0.2).toFixed(1)} ms</span></div>
                     <div className="flex justify-between pt-2 mt-2 border-t border-border font-bold text-foreground">
                         <span>Total System:</span> <span>
                                                       {(
@@ -452,7 +459,7 @@ export function ChatInterface() {
                                                         (response.timings_ms.embedding ?? 0) +
                                                         (response.timings_ms.retrieval ?? 0) +
                                                         (response.timings_ms.rerank ?? 0) +
-                                                        (response.timings_ms.llm * 0.3)
+                                                        (response.timings_ms.llm * 0.2)
                                                       ).toFixed(1)} ms
                                                     </span>
                     </div>
