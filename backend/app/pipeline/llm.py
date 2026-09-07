@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 _http_client = httpx.AsyncClient(limits=httpx.Limits(max_keepalive_connections=50, max_connections=100))
 client = AsyncGroq(api_key=settings.groq_api_key, http_client=_http_client)
 
-MODEL = "openai/gpt-oss-20b"
-TIMEOUT_SEC = 4.0
+MODEL = "qwen/qwen3.8-27b"
+TIMEOUT_SEC = 2.0
 
 LANGUAGE_REFUSAL_FALLBACKS = {
     "english": "I don't have enough information to answer this.",
@@ -48,9 +48,11 @@ def build_prompt(query: str, context_chunks: list[str], language: str, history: 
 
     lang_instruction = f"Respond in {language}. Do not respond in any other language unless the query itself is in that language."
 
-    system_prompt = f"""You are a helpful assistant.
-Answer concisely (1-2 sentences) using ONLY the provided context.
-If the answer is not in the context, refuse politely.
+    system_prompt = f"""You are a strict, objective AI assistant.
+Your ONLY source of information is the provided CONTEXT. You are strictly FORBIDDEN from using any external or internal knowledge.
+The provided CONTEXT may be in a different language than the question. Translate/use the meaning of the CONTEXT to answer in {language}, even if the CONTEXT language differs. Only say you don't know if the CONTEXT is topically unrelated to the question, not merely a different language.
+If the provided CONTEXT does not explicitly contain the exact answer to the user's question, you MUST reply with EXACTLY this string, and nothing else: "{get_fallback(language)}"
+Any deviation from this rule is a critical failure. Answer extremely concisely (under 10 words).
 {lang_instruction}
 
 CONTEXT:
@@ -83,7 +85,7 @@ async def llm_call(prompt: list[dict], language: str = "english", query: str = "
                     messages=prompt,
                     model=MODEL,
                     temperature=0.0, # 0.0 for deterministic factual answers
-                    max_tokens=256,  # Increased from 128 to prevent truncation in Indic scripts for GPT-OSS 20B
+                    max_tokens=30,  # Drastically reduced to ensure generation completes <200ms
                 ),
                 timeout=TIMEOUT_SEC
             )
@@ -147,6 +149,13 @@ async def llm_stream(prompt: list[dict], language: str = "english", query: str =
         except APIError as e:
             ts = datetime.datetime.now().strftime('%H:%M:%S.%f')[:-3]
             logger.warning("[%s] [%s] Groq API error on attempt %d: %s", ts, type(e).__name__, attempt + 1, str(e))
+            status_code = getattr(e, 'status_code', None)
+            if status_code in (401, 403):
+                yield "__ERROR__:GROQ_AUTH_ERROR"
+                return
+            elif status_code == 429:
+                yield "__ERROR__:GROQ_RATE_LIMIT"
+                return
         except Exception as e:
             ts = datetime.datetime.now().strftime('%H:%M:%S.%f')[:-3]
             logger.warning("[%s] [%s] Unexpected error on LLM call attempt %d: %s", ts, type(e).__name__, attempt + 1, str(e))

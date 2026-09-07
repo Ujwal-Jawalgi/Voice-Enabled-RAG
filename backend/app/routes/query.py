@@ -66,6 +66,9 @@ async def handle_query(req: QueryRequest, request: Request):
             # STT failure should just ask the user to retry the recording, returning a typed refusal
             error_msg = str(e)
             async def _error_gen():
+                if error_msg.startswith("__ERROR__:"):
+                    yield f"data: {json.dumps({'type': 'error_status', 'error_code': error_msg.split(':')[1]})}\n\n"
+                    error_msg = "Speech transcription service is currently unavailable. Please try again."
                 yield f"data: {json.dumps({'type': 'final', 'response': QueryResponse(transcript='', language='auto', answer=error_msg, sources=[], refused=True, confidence='low', timings_ms=Timings(stt=0.0, embedding=0.0, retrieval=0.0, rerank=0.0, llm=0.0, total=0.0)).model_dump()})}\n\n"
             return StreamingResponse(_error_gen(), media_type="text/event-stream")
     elif req.text:

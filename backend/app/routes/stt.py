@@ -65,6 +65,10 @@ async def process_audio(audio_base64: str) -> Tuple[str, str, float]:
         # We explicitly handle non-200 responses for better diagnostic logging
         if response.status_code != 200:
             logger.error("Sarvam API error %d: %s", response.status_code, response.text)
+            if response.status_code in (401, 403):
+                raise ValueError("__ERROR__:SARVAM_AUTH_ERROR")
+            elif response.status_code == 429:
+                raise ValueError("__ERROR__:SARVAM_RATE_LIMIT")
             response.raise_for_status()
             
         resp_data = response.json()
@@ -83,6 +87,10 @@ async def process_audio(audio_base64: str) -> Tuple[str, str, float]:
     except httpx.HTTPStatusError as e:
         # Fallback in case raise_for_status throws before our logging
         logger.error("Sarvam API HTTPStatusError %d: %s", e.response.status_code, e.response.text)
+        if e.response.status_code in (401, 403):
+            raise ValueError("__ERROR__:SARVAM_AUTH_ERROR")
+        elif e.response.status_code == 429:
+            raise ValueError("__ERROR__:SARVAM_RATE_LIMIT")
         raise ValueError("Speech transcription service is currently unavailable. Please try again.")
     except Exception as e:
         logger.error("STT network/processing error: %s", e)

@@ -1,0 +1,107 @@
+{
+  "meta": {
+    "target_root": "E:\\ZRAG-Voice\\Voice-Enabled-RAG\\backend",
+    "generation_backend": "groq",
+    "generation_model_hint": "unknown",
+    "language": "hin",
+    "split": "validation",
+    "num_answerable": 3,
+    "num_unanswerable": 3,
+    "num_examples": 6,
+    "num_chunks": 133,
+    "top_k": 5,
+    "seed": 42,
+    "num_errored": 0
+  },
+  "retrieval": {
+    "check": "retrieval (reference-based)",
+    "num_evaluated": 3,
+    "top_k": 5,
+    "cross_lingual": {
+      "recall_at_k": {
+        "1": 0.3333,
+        "3": 1.0,
+        "5": 1.0
+      },
+      "mrr": 0.6111
+    },
+    "same_language": {
+      "recall_at_k": {
+        "1": 0.3333,
+        "3": 1.0,
+        "5": 1.0
+      },
+      "mrr": 0.6111
+    }
+  },
+  "faithfulness": {
+    "check": "faithfulness / hallucination (reference-free, LLM-as-judge)",
+    "num_evaluated": 6,
+    "faithful_rate": 1.0,
+    "hallucination_rate": 0.0,
+    "num_confident_answers": 0,
+    "self_report_precision": 1.0,
+    "self_report_disagreements": [],
+    "hallucinated_examples": []
+  },
+  "correctness": {
+    "check": "correctness (reference-based, LLM-as-judge)",
+    "num_evaluated": 3,
+    "correct_rate": 1.0,
+    "incorrect_examples": []
+  },
+  "reliability": {
+    "check": "reliability / \"lying factor\" (answerable-vs-answered 2x2)",
+    "num_answerable_evaluated": 3,
+    "num_unanswerable_evaluated": 3,
+    "false_refusal_rate": 1.0,
+    "false_refusal_examples": [
+      {
+        "query": "compatibility definition",
+        "expected_answer": "Compatibility means the ability of machines, especially computers, or computer programs to work successfully."
+      },
+      {
+        "query": "how to find the surface area of a triangle",
+        "expected_answer": "To find the area of a triangle, multiply the base by the height, and then divide by 2. The division by 2 comes from the fact that a parallelogram can be divided into 2 triangles."
+      },
+      {
+        "query": "what is providing customer service",
+        "expected_answer": "Customer service is the act of taking care of the customer's needs by providing and delivering professional, helpful, high quality service and assistance before, during, and after the customer's requi"
+      }
+    ],
+    "false_confidence_rate": 0.0,
+    "false_confidence_examples": []
+  },
+  "latency": {
+    "check": "latency",
+    "num_evaluated": 6,
+    "embed": {
+      "avg_ms": 102.65,
+      "p50_ms": 113.03,
+      "p95_ms": 128.83,
+      "p99_ms": 129.9
+    },
+    "search": {
+      "avg_ms": 0.75,
+      "p50_ms": 0.23,
+      "p95_ms": 3.15,
+      "p99_ms": 5.91
+    },
+    "retrieval_total": {
+      "avg_ms": 107.33,
+      "p50_ms": 122.56,
+      "p95_ms": 132.59,
+      "p99_ms": 133.99
+    },
+    "generation": {
+      "avg_ms": 165.62,
+      "p50_ms": 131.09,
+      "p95_ms": 181.48,
+      "p99_ms": 184.3
+    },
+    "retrieval_latency_budget_ms": 50.0,
+    "retrieval_within_budget": false,
+    "generation_latency_target_ms": 1500.0,
+    "generation_within_target": true
+  }
+}

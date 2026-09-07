@@ -12,3 +12,4 @@ class Settings(BaseSettings):
 
 settings = Settings()
 limiter = Limiter(key_func=get_remote_address)
+GENERATION_BACKEND = "groq"

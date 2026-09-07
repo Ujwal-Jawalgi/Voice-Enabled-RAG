@@ -131,7 +131,7 @@ def off_topic_guardrail(top_score: float, threshold: float = OFF_TOPIC_THRESHOLD
 # ===========================================================================
 # 3. Output Guardrail — Lexical Overlap Grounding Check
 # ===========================================================================
-def output_guardrail(answer: str, context_chunks: list[str]) -> tuple[bool, str]:
+def output_guardrail(answer: str, context_chunks: list[str], answer_language: str = "english", context_language: str = "english") -> tuple[bool, str]:
     """Check whether the LLM's answer is grounded in the retrieved context.
 
     Uses a cheap lexical overlap metric: what fraction of "significant" words
@@ -149,6 +149,10 @@ def output_guardrail(answer: str, context_chunks: list[str]) -> tuple[bool, str]
     """
     if not answer or not context_chunks:
         return False, "low"
+
+    # Skip lexical check for cross-lingual queries
+    if answer_language.lower() != context_language.lower():
+        return True, "high"
 
     # Build a set of significant words from the context
     context_blob = " ".join(context_chunks).lower()

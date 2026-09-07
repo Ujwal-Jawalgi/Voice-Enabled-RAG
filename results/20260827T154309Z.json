@@ -1,0 +1,94 @@
+{
+  "meta": {
+    "target_root": "E:\\ZRAG-Voice\\Voice-Enabled-RAG\\backend",
+    "generation_backend": "groq",
+    "generation_model_hint": "unknown",
+    "language": "hin",
+    "split": "validation",
+    "num_answerable": 3,
+    "num_unanswerable": 3,
+    "num_examples": 6,
+    "num_chunks": 133,
+    "top_k": 5,
+    "seed": 42,
+    "num_errored": 0
+  },
+  "retrieval": {
+    "check": "retrieval (reference-based)",
+    "num_evaluated": 3,
+    "top_k": 5,
+    "cross_lingual": {
+      "recall_at_k": {
+        "1": 0.3333,
+        "3": 1.0,
+        "5": 1.0
+      },
+      "mrr": 0.6111
+    },
+    "same_language": {
+      "recall_at_k": {
+        "1": 0.3333,
+        "3": 1.0,
+        "5": 1.0
+      },
+      "mrr": 0.6111
+    }
+  },
+  "faithfulness": {
+    "check": "faithfulness / hallucination (reference-free, LLM-as-judge)",
+    "num_evaluated": 6,
+    "faithful_rate": 1.0,
+    "hallucination_rate": 0.0,
+    "num_confident_answers": 3,
+    "self_report_precision": 1.0,
+    "self_report_disagreements": [],
+    "hallucinated_examples": []
+  },
+  "correctness": {
+    "check": "correctness (reference-based, LLM-as-judge)",
+    "num_evaluated": 3,
+    "correct_rate": 1.0,
+    "incorrect_examples": []
+  },
+  "reliability": {
+    "check": "reliability / \"lying factor\" (answerable-vs-answered 2x2)",
+    "num_answerable_evaluated": 3,
+    "num_unanswerable_evaluated": 3,
+    "false_refusal_rate": 0.0,
+    "false_refusal_examples": [],
+    "false_confidence_rate": 0.0,
+    "false_confidence_examples": []
+  },
+  "latency": {
+    "check": "latency",
+    "num_evaluated": 6,
+    "embed": {
+      "avg_ms": 45.0,
+      "p50_ms": 45.0,
+      "p95_ms": 45.0,
+      "p99_ms": 45.0
+    },
+    "search": {
+      "avg_ms": 0.59,
+      "p50_ms": 0.17,
+      "p95_ms": 2.5,
+      "p99_ms": 4.43
+    },
+    "retrieval_total": {
+      "avg_ms": 48.0,
+      "p50_ms": 48.0,
+      "p95_ms": 48.0,
+      "p99_ms": 48.0
+    },
+    "generation": {
+      "avg_ms": 115.52,
+      "p50_ms": 100.79,
+      "p95_ms": 121.41,
+      "p99_ms": 124.35
+    },
+    "retrieval_latency_budget_ms": 50.0,
+    "retrieval_within_budget": true,
+    "generation_latency_target_ms": 1500.0,
+    "generation_within_target": true
+  }
+}

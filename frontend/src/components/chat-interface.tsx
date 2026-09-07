@@ -38,6 +38,7 @@ export function ChatInterface() {
   const [response, setResponse] = useState<QueryResponse | null>(null);
   const [sourcePreview, setSourcePreview] = useState<{ text: string, elapsed_ms: number, passage_id: string, score: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [apiStatusError, setApiStatusError] = useState<string | null>(null);
   const [latencies, setLatencies] = useState<number[]>([]);
 
   // TTS Mute / Unmute State (Default: ON / not muted)
@@ -141,6 +142,40 @@ export function ChatInterface() {
     }
   };
 
+  const speakFallback = (text: string, langName: string) => {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel(); // clear queue
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    const langMap: Record<string, string> = {
+      english: "en-IN", hindi: "hi-IN", kannada: "kn-IN",
+      punjabi: "pa-IN", tamil: "ta-IN", telugu: "te-IN",
+      marathi: "mr-IN", bengali: "bn-IN", gujarati: "gu-IN",
+      malayalam: "ml-IN", odia: "or-IN", urdu: "ur-IN"
+    };
+    utterance.lang = langMap[langName] || "en-US";
+
+    const setVoiceAndSpeak = () => {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        const exactMatch = voices.find(v => v.lang === utterance.lang);
+        const langPrefixMatch = voices.find(v => v.lang.startsWith(utterance.lang.split('-')[0]));
+        if (exactMatch) utterance.voice = exactMatch;
+        else if (langPrefixMatch) utterance.voice = langPrefixMatch;
+      }
+      isPlayingRef.current = true;
+      utterance.onend = () => { isPlayingRef.current = false; };
+      utterance.onerror = () => { isPlayingRef.current = false; };
+      window.speechSynthesis.speak(utterance);
+    };
+
+    if (window.speechSynthesis.getVoices().length === 0) {
+      window.speechSynthesis.addEventListener('voiceschanged', setVoiceAndSpeak, { once: true });
+    } else {
+      setVoiceAndSpeak();
+    }
+  };
+
   const toggleTts = () => {
     const nextMuted = !isTtsMuted;
     setIsTtsMuted(nextMuted);
@@ -151,6 +186,7 @@ export function ChatInterface() {
       if (currentAudioRef.current) {
         currentAudioRef.current.pause();
       }
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
       isPlayingRef.current = false;
     } else {
       // Resume speaking from current audio or next in queue
@@ -179,6 +215,7 @@ export function ChatInterface() {
       currentAudioRef.current.pause();
       currentAudioRef.current = null;
     }
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
     audioChunksRef.current = [];
     currentChunkIndexRef.current = 0;
     isPlayingRef.current = false;
@@ -188,6 +225,8 @@ export function ChatInterface() {
     setMessages(newMessages);
 
     let currentPreview: { text: string, elapsed_ms: number, passage_id: string, score: number } | null = null;
+    let finalAnswerText = "";
+    let finalLanguage = "";
 
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
@@ -229,7 +268,11 @@ export function ChatInterface() {
                 if (!isPlayingRef.current && !isTtsMutedRef.current) {
                   playNextChunk();
                 }
+              } else if (data.type === "error_status" && data.error_code) {
+                setApiStatusError(data.error_code);
               } else if (data.type === "final" && data.response) {
+                finalAnswerText = data.response.answer;
+                finalLanguage = data.response.language;
                 setResponse(data.response);
                 const updatedMessages = [...newMessages, { role: "assistant" as const, data: data.response, sourcePreview: currentPreview || undefined }];
                 setMessages(updatedMessages);
@@ -244,6 +287,10 @@ export function ChatInterface() {
             }
           }
         }
+      }
+
+      if (!isTtsMutedRef.current && audioChunksRef.current.length === 0 && finalAnswerText) {
+        speakFallback(finalAnswerText, finalLanguage);
       }
     } catch (err) {
       console.error(err);
@@ -262,6 +309,32 @@ export function ChatInterface() {
 
   return (
     <div className="w-full flex items-start gap-4 md:gap-8 relative">
+
+      {/* Global Status Banner */}
+      <div className="absolute top-0 left-0 right-0 z-50 flex justify-center mt-2 pointer-events-none">
+        <div className="pointer-events-auto flex items-center gap-3">
+          {apiStatusError ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-100 dark:bg-red-900/40 border border-red-200 dark:border-red-800/60 shadow-sm animate-in fade-in slide-in-from-top-2">
+              <AlertTriangle className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+              <span className="text-xs font-semibold text-red-600 dark:text-red-400">
+                API Error: {apiStatusError}
+              </span>
+              <button onClick={() => setApiStatusError(null)} className="ml-1 text-red-500 hover:text-red-700">×</button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30 shadow-sm">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Backend Healthy</span>
+            </div>
+          )}
+          
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 shadow-sm">
+            <span className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+              Railway Pro expires: 2026-09-30
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* Sidebar / Hamburger Column (Docked Far Left) */}
       <div
