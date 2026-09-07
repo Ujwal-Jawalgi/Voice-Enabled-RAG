@@ -19,8 +19,7 @@ from dataclasses import dataclass
 
 import faiss
 import numpy as np
-from sentence_transformers import SentenceTransformer
-import torch
+from fastembed import TextEmbedding
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +30,7 @@ _DEFAULT_DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname
 _DATA_DIR = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH", _DEFAULT_DATA_DIR)
 _INDEX_PATH = os.path.join(_DATA_DIR, "vector_index.faiss")
 _META_PATH = os.path.join(_DATA_DIR, "metadata.pkl")
-_MODEL_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
-
+_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -53,7 +51,7 @@ class Candidate:
 # On a typical Railway container with 1-2 GB RAM this is fine:
 #   - FAISS IndexFlatIP for 18k × 384-dim ≈ 28 MB
 #   - Metadata list of 18k dicts ≈ 15-25 MB
-#   - MiniLM model ≈ 130 MB
+#   - MiniLM model via fastembed ≈ 130 MB
 # ---------------------------------------------------------------------------
 try:
     logger.info("Loading FAISS index from %s", _INDEX_PATH)
@@ -77,14 +75,12 @@ except Exception as e:
     _vectors = None
     _metadata = []
 
-logger.info("Loading SentenceTransformer model: %s", _MODEL_NAME)
-torch.set_grad_enabled(False)
-_model = SentenceTransformer(_MODEL_NAME)
-_model.eval()
+logger.info("Loading FastEmbed model: %s", _MODEL_NAME)
+_model = TextEmbedding(model_name=_MODEL_NAME)
 
-# Force PyTorch graph compilation to avoid 1s latency hit on first query
+# Force graph compilation to avoid latency hit on first query
 logger.info("Warming up embedding model...")
-_model.encode(["warmup"], normalize_embeddings=True)
+list(_model.embed(["warmup"]))
 
 logger.info("Retrieval module ready.")
 
@@ -98,8 +94,11 @@ def embed_query(text: str) -> np.ndarray:
     Returns shape (1, 384).
     Normalization ensures dot product computes cosine similarity.
     """
-    vec = _model.encode([text], normalize_embeddings=True)
-    return vec.astype(np.float32) # type: ignore
+    vec = next(_model.embed([text]))
+    norm = np.linalg.norm(vec)
+    if norm > 0:
+        vec = vec / norm
+    return vec.reshape(1, -1).astype(np.float32)
 
 
 def search(query_vector: np.ndarray, k: int = 5) -> list[Candidate]:
