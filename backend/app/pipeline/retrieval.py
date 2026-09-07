@@ -76,7 +76,7 @@ except Exception as e:
     _metadata = []
 
 logger.info("Loading FastEmbed model: %s", _MODEL_NAME)
-_model = TextEmbedding(model_name=_MODEL_NAME)
+_model = TextEmbedding(model_name=_MODEL_NAME, threads=1)
 
 # Force graph compilation to avoid latency hit on first query
 logger.info("Warming up embedding model...")
