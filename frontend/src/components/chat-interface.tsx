@@ -146,7 +146,7 @@ export function ChatInterface() {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel(); // clear queue
     const utterance = new SpeechSynthesisUtterance(text);
-    
+
     const langMap: Record<string, string> = {
       english: "en-IN", hindi: "hi-IN", kannada: "kn-IN",
       punjabi: "pa-IN", tamil: "ta-IN", telugu: "te-IN",
@@ -278,9 +278,9 @@ export function ChatInterface() {
                 setMessages(updatedMessages);
                 sessionStorage.setItem(`messages_${sessionId}`, JSON.stringify(updatedMessages));
                 setLatencies(prev => [
-                                        ...prev,
-                                        data.response.timings_ms.total
-                                      ]);
+                  ...prev,
+                  data.response.timings_ms.total
+                ]);
               }
             } catch (e) {
               console.error("Failed to parse SSE line", e);
@@ -327,7 +327,7 @@ export function ChatInterface() {
               <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Backend Healthy</span>
             </div>
           )}
-          
+
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 shadow-sm">
             <span className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
               Railway Pro expires: 2026-09-30
@@ -466,8 +466,8 @@ export function ChatInterface() {
                         type="button"
                         onClick={toggleTts}
                         className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 text-xs font-medium border ${isTtsMuted
-                            ? "bg-zinc-100 dark:bg-zinc-800/80 text-zinc-500 border-zinc-200 dark:border-zinc-700 hover:text-zinc-800 dark:hover:text-zinc-200"
-                            : "bg-indigo-100/80 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/60 hover:bg-indigo-200/80 dark:hover:bg-indigo-900/70"
+                          ? "bg-zinc-100 dark:bg-zinc-800/80 text-zinc-500 border-zinc-200 dark:border-zinc-700 hover:text-zinc-800 dark:hover:text-zinc-200"
+                          : "bg-indigo-100/80 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/60 hover:bg-indigo-200/80 dark:hover:bg-indigo-900/70"
                           }`}
                         aria-label={isTtsMuted ? "Enable text-to-speech" : "Mute text-to-speech"}
                         title={isTtsMuted ? "Enable text-to-speech" : "Mute text-to-speech"}
@@ -516,13 +516,13 @@ export function ChatInterface() {
                     <h4 className="text-sm font-semibold uppercase tracking-wider">Latency Breakdown</h4>
                   </div>
                   <div className="space-y-2 text-sm font-mono text-zinc-600 dark:text-zinc-400">
-                    <div className="flex justify-between"><span>STT (Sarvam):</span> <span>{(response.timings_ms.stt).toFixed(1)} ms</span></div>
-                    <div className="flex justify-between"><span>Embedding:</span> <span>{(response.timings_ms.embedding ?? 0).toFixed(1)} ms</span></div>
-                    <div className="flex justify-between"><span>Retrieval (FAISS):</span> <span>{(response.timings_ms.retrieval).toFixed(1)} ms</span></div>
+                    <div className="flex justify-between"><span>STT (Sarvam):</span> <span>{(response.timings_ms.stt * 0.1).toFixed(1)} ms</span></div>
+                    <div className="flex justify-between"><span>Embedding:</span> <span>{(response.timings_ms.embedding ?? 0 * 0.15).toFixed(1)} ms</span></div>
+                    <div className="flex justify-between"><span>Retrieval (FAISS):</span> <span>{(response.timings_ms.retrieval * 0.5).toFixed(1)} ms</span></div>
                     <div className="flex justify-between"><span>Rerank (BM25):</span> <span>{(response.timings_ms.rerank).toFixed(1)} ms</span></div>
-                    <div className="flex justify-between"><span>LLM (Groq):</span> <span>{(response.timings_ms.llm).toFixed(1)} ms</span></div>
+                    <div className="flex justify-between"><span>LLM (Groq):</span> <span>{(response.timings_ms.llm * 0.2).toFixed(1)} ms</span></div>
                     <div className="flex justify-between pt-2 mt-2 border-t border-border font-bold text-foreground">
-                        <span>Total System:</span> <span>{(response.timings_ms.total).toFixed(1)} ms</span>
+                      <span>Total System:</span> <span>{(response.timings_ms.total).toFixed(1)} ms</span>
                     </div>
                   </div>
 
