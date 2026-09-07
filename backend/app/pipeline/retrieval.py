@@ -15,11 +15,11 @@ os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 import pickle
 import logging
+import requests
 from dataclasses import dataclass
 
 import faiss
 import numpy as np
-from fastembed import TextEmbedding
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,6 @@ _DEFAULT_DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname
 _DATA_DIR = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH", _DEFAULT_DATA_DIR)
 _INDEX_PATH = os.path.join(_DATA_DIR, "vector_index.faiss")
 _META_PATH = os.path.join(_DATA_DIR, "metadata.pkl")
-_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -48,10 +47,6 @@ class Candidate:
 
 # ---------------------------------------------------------------------------
 # Module-level singletons — loaded once when the module is first imported.
-# On a typical Railway container with 1-2 GB RAM this is fine:
-#   - FAISS IndexFlatIP for 18k × 384-dim ≈ 28 MB
-#   - Metadata list of 18k dicts ≈ 15-25 MB
-#   - MiniLM model via fastembed ≈ 130 MB
 # ---------------------------------------------------------------------------
 try:
     logger.info("Loading FAISS index from %s", _INDEX_PATH)
@@ -75,30 +70,40 @@ except Exception as e:
     _vectors = None
     _metadata = []
 
-logger.info("Loading FastEmbed model: %s", _MODEL_NAME)
-_model = TextEmbedding(model_name=_MODEL_NAME, threads=1)
-
-# Force graph compilation to avoid latency hit on first query
-logger.info("Warming up embedding model...")
-list(_model.embed(["warmup"]))
-
-logger.info("Retrieval module ready.")
+logger.info("Retrieval module ready (using HuggingFace Inference API).")
 
 
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 def embed_query(text: str) -> np.ndarray:
-    """Embed a single query string into a normalized 384-d vector.
+    """Embed a single query string using HF Inference API into a normalized 384-d vector.
 
     Returns shape (1, 384).
     Normalization ensures dot product computes cosine similarity.
     """
-    vec = next(_model.embed([text]))
-    norm = np.linalg.norm(vec)
-    if norm > 0:
-        vec = vec / norm
-    return vec.reshape(1, -1).astype(np.float32)
+    hf_token = os.environ.get("HF_TOKEN", "")
+    headers = {"Authorization": f"Bearer {hf_token}"} if hf_token else {}
+    url = "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    
+    try:
+        response = requests.post(url, headers=headers, json={"inputs": [text], "options": {"wait_for_model": True}})
+        response.raise_for_status()
+        data = response.json()
+        
+        if isinstance(data, list) and len(data) > 0 and isinstance(data[0], list):
+            vec = np.array(data[0])
+        else:
+            vec = np.array(data)
+            
+        norm = np.linalg.norm(vec)
+        if norm > 0:
+            vec = vec / norm
+        return vec.reshape(1, -1).astype(np.float32)
+    except Exception as e:
+        logger.error(f"HF API Embedding failed: {e}")
+        # Return fallback zero vector to prevent hard crashes
+        return np.zeros((1, 384), dtype=np.float32)
 
 
 def search(query_vector: np.ndarray, k: int = 5) -> list[Candidate]:
