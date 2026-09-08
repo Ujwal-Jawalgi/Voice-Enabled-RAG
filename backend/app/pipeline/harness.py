@@ -141,19 +141,7 @@ async def run_pipeline(
     timings["embedding"] = t_embed
     timings["retrieval"] = t_retrieve
 
-    # Stage 4: Off-Topic Guardrail
-    t0 = time.perf_counter()
-    top_score = candidates[0].score if candidates else 0.0
-    is_off_topic = off_topic_guardrail(top_score)
-    timings["guardrails"] += (time.perf_counter() - t0) * 1000
-    
-    if is_off_topic:
-        timings["total"] = (time.perf_counter() - t_pipeline_start) * 1000 + stt_time_ms
-        logger.info("Refusal [Off-topic]: query='%s', top_score=%.4f", transcript, top_score)
-        yield sse("final", {"response": _refusal_response_dict(transcript, language, f"Query appears off-topic (best match score: {top_score:.3f})", timings)})
-        return
-
-    # Stage 5: Rerank
+    # Stage 4: Rerank
     t0 = time.perf_counter()
     reranked: list[Candidate] = rerank(transcript, candidates)
     t_rerank = (time.perf_counter() - t0) * 1000
@@ -168,6 +156,7 @@ async def run_pipeline(
             "passage_id": reranked[0].passage_id,
             "score": round(reranked[0].score, 4)
         })
+
 
     # Feed top retrieved source passage text to TTS/sentence-buffering pipeline unconditionally
     tts_tasks = []

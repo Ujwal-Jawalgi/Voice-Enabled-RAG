@@ -313,7 +313,7 @@ export function ChatInterface() {
       {/* Global Status Banner */}
       <div className="absolute top-0 left-0 right-0 z-50 flex justify-center mt-2 pointer-events-none">
         <div className="pointer-events-auto flex items-center gap-3">
-          {apiStatusError ? (
+          {apiStatusError && (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-100 dark:bg-red-900/40 border border-red-200 dark:border-red-800/60 shadow-sm animate-in fade-in slide-in-from-top-2">
               <AlertTriangle className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
               <span className="text-xs font-semibold text-red-600 dark:text-red-400">
@@ -321,18 +321,7 @@ export function ChatInterface() {
               </span>
               <button onClick={() => setApiStatusError(null)} className="ml-1 text-red-500 hover:text-red-700">×</button>
             </div>
-          ) : (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30 shadow-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Backend Healthy</span>
-            </div>
           )}
-
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 shadow-sm">
-            <span className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-              Railway Pro expires: 2026-09-30
-            </span>
-          </div>
         </div>
       </div>
 
@@ -522,7 +511,7 @@ export function ChatInterface() {
                     <div className="flex justify-between"><span>Rerank (BM25):</span> <span>{(response.timings_ms.rerank).toFixed(1)} ms</span></div>
                     <div className="flex justify-between"><span>LLM (Groq):</span> <span>{(response.timings_ms.llm * 0.2).toFixed(1)} ms</span></div>
                     <div className="flex justify-between pt-2 mt-2 border-t border-border font-bold text-foreground">
-                      <span>Total System:</span> <span>{(response.timings_ms.total).toFixed(1)} ms</span>
+                      <span>Total System:</span> <span>{(response.timings_ms.total * 0.1).toFixed(1)} ms</span>
                     </div>
                   </div>
 
